@@ -1,7 +1,7 @@
 "use client"
 
 import React, { useEffect } from 'react'
-import { useParams, useRouter } from 'next/navigation'
+import { useRouter } from 'next/navigation'
 import { useSignalR } from '@/contexts/SignalRContext'
 import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
@@ -15,11 +15,10 @@ import { PlayersList } from '@/components/room/PlayersList'
 import { GameControls } from '@/components/room/GameControls'
 
 export default function RoomPage() {
-  const params = useParams()
   const router = useRouter()
   const { playerState, leaveRoom } = useSignalR()
-  const roomCode = params.roomCode as string
-  const { roomData, isLoading, error, setError } = useRoom(roomCode)
+  const roomCode = playerState?.roomCode;
+  const { roomData, isLoading, error, setError } = useRoom(roomCode!)
 
   // Redirect to home if no player state is available
   useEffect(() => {
