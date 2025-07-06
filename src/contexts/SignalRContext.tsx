@@ -2,7 +2,7 @@
 
 import React, { createContext, useContext, useEffect, useState, ReactNode } from 'react'
 import { HubConnection, HubConnectionBuilder, LogLevel } from '@microsoft/signalr'
-import { CreateRoomRequest, JoinRoomRequest, RoomDto, SignalRContextType, PlayerState } from '@/types/signalr'
+import { CreateRoomRequest, JoinRoomRequest, RoomDto, SignalRContextType, PlayerState, PlayerDto } from '@/types/signalr'
 
 const SignalRContext = createContext<SignalRContextType | undefined>(undefined)
 
@@ -89,7 +89,7 @@ export const SignalRProvider: React.FC<SignalRProviderProps> = ({ children }) =>
     }
   }, [])
 
-  const createRoom = async (hostName: string, options?: Partial<CreateRoomRequest>): Promise<RoomDto | null> => {
+  const createRoom = async (hostName: string, options?: Partial<CreateRoomRequest>): Promise<{ room: RoomDto; player: PlayerDto } | null> => {
     if (!connection || !isConnected) {
       console.error('SignalR not connected')
       return null
@@ -97,11 +97,11 @@ export const SignalRProvider: React.FC<SignalRProviderProps> = ({ children }) =>
 
     return new Promise((resolve, reject) => {
       // Set up one-time event listeners
-      const handleRoomCreated = (room: RoomDto) => {
+      const handleRoomCreated = (room: RoomDto, player: PlayerDto) => {
         console.log('Room created:', room)
         connection.off('RoomCreated', handleRoomCreated)
         connection.off('Error', handleError)
-        resolve(room)
+        resolve({ room, player })
       }
 
       const handleError = (errorMessage: string) => {
@@ -136,7 +136,7 @@ export const SignalRProvider: React.FC<SignalRProviderProps> = ({ children }) =>
     })
   }
 
-  const joinRoom = async (roomCode: string, playerName: string): Promise<RoomDto | null> => {
+  const joinRoom = async (roomCode: string, playerName: string): Promise<{ room: RoomDto; player: PlayerDto } | null> => {
     if (!connection || !isConnected) {
       console.error('SignalR not connected')
       return null
@@ -144,11 +144,11 @@ export const SignalRProvider: React.FC<SignalRProviderProps> = ({ children }) =>
 
     return new Promise((resolve, reject) => {
       // Set up one-time event listeners
-      const handleRoomJoined = (room: RoomDto) => {
+      const handleRoomJoined = (room: RoomDto, player: PlayerDto) => {
         console.log('Room joined:', room)
         connection.off('RoomJoined', handleRoomJoined)
         connection.off('Error', handleError)
-        resolve(room)
+        resolve({ room, player })
       }
 
       const handleError = (errorMessage: string) => {

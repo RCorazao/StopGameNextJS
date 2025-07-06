@@ -22,7 +22,7 @@ export interface RoomDto {
   hostUserId: string
   topics: TopicDto[]
   players: PlayerDto[]
-  state: string
+  state: RoomState
   rounds: RoundDto[]
   createdAt: string
   expiresAt?: string
@@ -31,6 +31,13 @@ export interface RoomDto {
   votingDurationSeconds: number
   maxRounds: number
   currentRound?: RoundDto
+}
+
+export enum RoomState {
+  Waiting = 0,
+  Playing = 1,
+  Voting = 2,
+  Finished = 3
 }
 
 export interface PlayerDto {
@@ -89,8 +96,10 @@ export interface AnswerDto {
 }
 
 export interface PlayerState {
+  id: string
   name: string
   isHost: boolean
+  score: number | 0
   roomCode?: string
 }
 
@@ -100,7 +109,7 @@ export interface SignalRContextType {
   isConnected: boolean
   playerState: PlayerState | null
   setPlayerState: (state: PlayerState | null) => void
-  createRoom: (hostName: string, options?: Partial<CreateRoomRequest>) => Promise<RoomDto | null>
-  joinRoom: (roomCode: string, playerName: string) => Promise<RoomDto | null>
+  createRoom: (hostName: string, options?: Partial<CreateRoomRequest>) => Promise<{ room: RoomDto; player: PlayerDto } | null>
+  joinRoom: (roomCode: string, playerName: string) => Promise<{ room: RoomDto; player: PlayerDto } | null>
   leaveRoom: () => Promise<void>
 }
