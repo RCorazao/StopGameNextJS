@@ -3,17 +3,25 @@ import { HubConnection } from '@microsoft/signalr'
 
 export interface CreateRoomRequest {
   hostName: string
-  customTopics: string[]
-  useDefaultTopics: boolean
-  maxPlayers: number
-  roundDurationSeconds: number
-  votingDurationSeconds: number
-  maxRounds: number
+  customTopics?: string[]
+  useDefaultTopics?: boolean
+  maxPlayers?: number
+  roundDurationSeconds?: number
+  votingDurationSeconds?: number
+  maxRounds?: number
 }
 
 export interface JoinRoomRequest {
   roomCode: string
   playerName: string
+}
+
+export interface UpdateRoomSettingsRequest {
+  topics: string[]
+  maxPlayers?: number
+  roundDurationSeconds?: number
+  votingDurationSeconds?: number
+  maxRounds?: number
 }
 
 export interface RoomDto {
@@ -112,4 +120,5 @@ export interface SignalRContextType {
   createRoom: (hostName: string, options?: Partial<CreateRoomRequest>) => Promise<{ room: RoomDto; player: PlayerDto } | null>
   joinRoom: (roomCode: string, playerName: string) => Promise<{ room: RoomDto; player: PlayerDto } | null>
   leaveRoom: () => Promise<void>
+  updateRoomSettings: (roomCode: string, settings: Partial<CreateRoomRequest>) => Promise<void>
 }

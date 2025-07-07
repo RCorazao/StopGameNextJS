@@ -13,6 +13,7 @@ import { ErrorDisplay } from '@/components/common/ErrorDisplay'
 import { RoomHeader } from '@/components/room/RoomHeader'
 import { PlayersList } from '@/components/room/PlayersList'
 import { GameControls } from '@/components/room/GameControls'
+import { RoomSettings } from '@/components/room/RoomSettings'
 
 export default function RoomPage() {
   const router = useRouter()
@@ -61,6 +62,12 @@ export default function RoomPage() {
         <GameControls 
           roomData={roomData} 
           playerState={playerState} 
+          onError={setError}
+        />
+        
+        <RoomSettings 
+          roomData={roomData} 
+          playerState={playerState!} 
           onError={setError}
         />
 

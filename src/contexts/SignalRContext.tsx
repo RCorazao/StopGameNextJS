@@ -89,7 +89,7 @@ export const SignalRProvider: React.FC<SignalRProviderProps> = ({ children }) =>
     }
   }, [])
 
-  const createRoom = async (hostName: string, options?: Partial<CreateRoomRequest>): Promise<{ room: RoomDto; player: PlayerDto } | null> => {
+  const createRoom = async (hostName: string): Promise<{ room: RoomDto; player: PlayerDto } | null> => {
     if (!connection || !isConnected) {
       console.error('SignalR not connected')
       return null
@@ -118,12 +118,6 @@ export const SignalRProvider: React.FC<SignalRProviderProps> = ({ children }) =>
       // Prepare request with defaults
       const request: CreateRoomRequest = {
         hostName,
-        customTopics: options?.customTopics || [],
-        useDefaultTopics: options?.useDefaultTopics ?? true,
-        maxPlayers: options?.maxPlayers || 8,
-        roundDurationSeconds: options?.roundDurationSeconds || 60,
-        votingDurationSeconds: options?.votingDurationSeconds || 30,
-        maxRounds: options?.maxRounds || 5
       }
 
       // Send request to server
@@ -193,6 +187,20 @@ export const SignalRProvider: React.FC<SignalRProviderProps> = ({ children }) =>
     }
   }
 
+  const updateRoomSettings = async (roomCode: string, settings: Partial<CreateRoomRequest>): Promise<void> => {
+    if (!connection || !isConnected) {
+      throw new Error('SignalR not connected')
+    }
+
+    try {
+      await connection.invoke('UpdateRoomSettings', roomCode, settings)
+      console.log('Room settings updated successfully')
+    } catch (error) {
+      console.error('Failed to update room settings:', error)
+      throw error
+    }
+  }
+
   const contextValue: SignalRContextType = {
     connection,
     connectionState,
@@ -201,7 +209,8 @@ export const SignalRProvider: React.FC<SignalRProviderProps> = ({ children }) =>
     setPlayerState,
     createRoom,
     joinRoom,
-    leaveRoom
+    leaveRoom,
+    updateRoomSettings
   }
 
   return (
