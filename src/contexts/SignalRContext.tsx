@@ -201,6 +201,20 @@ export const SignalRProvider: React.FC<SignalRProviderProps> = ({ children }) =>
     }
   }
 
+  const startRound = async (roomCode: string): Promise<void> => {
+    if (!connection || !isConnected) {
+      throw new Error('SignalR not connected')
+    }
+
+    try {
+      await connection.invoke('StartRound')
+      console.log('Round started successfully')
+    } catch (error) {
+      console.error('Failed to start round:', error)
+      throw error
+    }
+  }
+
   const contextValue: SignalRContextType = {
     connection,
     connectionState,
@@ -210,7 +224,8 @@ export const SignalRProvider: React.FC<SignalRProviderProps> = ({ children }) =>
     createRoom,
     joinRoom,
     leaveRoom,
-    updateRoomSettings
+    updateRoomSettings,
+    startRound
   }
 
   return (

@@ -13,52 +13,62 @@ interface GameControlsProps {
 }
 
 export const GameControls: React.FC<GameControlsProps> = ({ roomData, playerState, onError }) => {
-  const { connection, isConnected } = useSignalR()
+  const { connection, isConnected, startRound } = useSignalR()
 
-  const handleStartGame = async () => {
-    if (!connection || !isConnected || !playerState?.isHost) return
+  const handleStartRound = async () => {
+    if (!playerState?.isHost) return
     
     try {
-      await connection.invoke('StartGame', roomData.code)
+      await startRound(roomData.code)
     } catch (error) {
-      console.error('Failed to start game:', error)
-      onError('Failed to start game. Please try again.')
+      console.error('Failed to start round:', error)
+      onError('Failed to start round. Please try again.')
     }
   }
 
-  if (roomData.state !== RoomState.Waiting) {
-    return null
+  // Show start round button when waiting or when playing but no active round
+  if (roomData.state === RoomState.Waiting || 
+      (roomData.state === RoomState.Playing && (!roomData.currentRound || !roomData.currentRound.isActive))) {
+    
+    const isFirstRound = roomData.state === RoomState.Waiting
+    const roundNumber = (roomData.rounds?.length || 0) + 1
+    
+    return (
+      <Card className="backdrop-blur-sm bg-white/90">
+        <CardContent className="p-6">
+          <div className="space-y-4">
+            {playerState?.isHost ? (
+              <>
+                <p className="text-center text-gray-600">
+                  {isFirstRound 
+                    ? "You are the host. Start the first round when ready!" 
+                    : "Ready to start the next round?"}
+                </p>
+                <Button 
+                  onClick={handleStartRound} 
+                  className={`w-full ${isFirstRound ? 'bg-green-500 hover:bg-green-600' : 'bg-blue-500 hover:bg-blue-600'}`}
+                  disabled={isFirstRound && roomData.players.length < 2}
+                >
+                  Start Round {roundNumber}
+                </Button>
+                {isFirstRound && roomData.players.length < 2 && (
+                  <p className="text-sm text-gray-500 text-center">
+                    Need at least 2 players to start
+                  </p>
+                )}
+              </>
+            ) : (
+              <p className="text-center text-gray-600">
+                {isFirstRound 
+                  ? "Waiting for the host to start the game..." 
+                  : "Waiting for the host to start the next round..."}
+              </p>
+            )}
+          </div>
+        </CardContent>
+      </Card>
+    )
   }
 
-  return (
-    <Card className="backdrop-blur-sm bg-white/90">
-      <CardContent className="p-6">
-        <div className="space-y-4">
-          {playerState?.isHost ? (
-            <>
-              <p className="text-center text-gray-600">
-                You are the host. Start the game when ready!
-              </p>
-              <Button 
-                onClick={handleStartGame} 
-                className="w-full bg-green-500 hover:bg-green-600"
-                disabled={roomData.players.length < 2}
-              >
-                Start Game
-              </Button>
-              {roomData.players.length < 2 && (
-                <p className="text-sm text-gray-500 text-center">
-                  Need at least 2 players to start
-                </p>
-              )}
-            </>
-          ) : (
-            <p className="text-center text-gray-600">
-              Waiting for the host to start the game...
-            </p>
-          )}
-        </div>
-      </CardContent>
-    </Card>
-  )
+  return null
 }

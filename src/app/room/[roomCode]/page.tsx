@@ -14,6 +14,7 @@ import { RoomHeader } from '@/components/room/RoomHeader'
 import { PlayersList } from '@/components/room/PlayersList'
 import { GameControls } from '@/components/room/GameControls'
 import { RoomSettings } from '@/components/room/RoomSettings'
+import { RoundPlay } from '@/components/room/RoundPlay'
 
 export default function RoomPage() {
   const router = useRouter()
@@ -57,7 +58,18 @@ export default function RoomPage() {
         
         <RoomHeader roomData={roomData} />
         
-        <PlayersList roomData={roomData} playerState={playerState} />
+        {/* Show player list and room settings only when no active round */}
+        {!(roomData.currentRound && roomData.currentRound.isActive) && (
+          <>
+            <PlayersList roomData={roomData} playerState={playerState} />
+            
+            <RoomSettings 
+              roomData={roomData} 
+              playerState={playerState!} 
+              onError={setError}
+            />
+          </>
+        )}
         
         <GameControls 
           roomData={roomData} 
@@ -65,11 +77,14 @@ export default function RoomPage() {
           onError={setError}
         />
         
-        <RoomSettings 
-          roomData={roomData} 
-          playerState={playerState!} 
-          onError={setError}
-        />
+        {/* Show round play when there's an active round */}
+        {roomData.currentRound && roomData.currentRound.isActive && (
+          <RoundPlay 
+            roomData={roomData} 
+            playerState={playerState} 
+            onError={setError}
+          />
+        )}
 
         {/* Leave Room */}
         <Card className="backdrop-blur-sm bg-white/80">

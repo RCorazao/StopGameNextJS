@@ -69,12 +69,12 @@ export interface TopicDto {
 export interface RoundDto {
   id: string
   letter: string
-  StartedAt: string
-  EndedAt: string
-  Submissions: SubmissionDto[]
-  Votes: VoteDto[]
-  IsActive: boolean
-  TimeRemainingSeconds: number
+  startedAt: string
+  endedAt: string
+  submissions: SubmissionDto[]
+  votes: VoteDto[]
+  isActive: boolean
+  timeRemainingSeconds: number
 }
 
 export interface SubmissionDto {
@@ -82,10 +82,10 @@ export interface SubmissionDto {
   playerName: string
   topicName: string
   answer: AnswerDto
-  SubmittedAt: string
-  IsValid: boolean
-  VotesValid: number
-  VotesInvalid: number
+  submittedAt: string
+  isValid: boolean
+  votesValid: number
+  votesInvalid: number
 }
 
 export interface VoteDto {
@@ -121,4 +121,5 @@ export interface SignalRContextType {
   joinRoom: (roomCode: string, playerName: string) => Promise<{ room: RoomDto; player: PlayerDto } | null>
   leaveRoom: () => Promise<void>
   updateRoomSettings: (roomCode: string, settings: Partial<CreateRoomRequest>) => Promise<void>
+  startRound: (roomCode: string) => Promise<void>
 }
