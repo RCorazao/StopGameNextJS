@@ -17,9 +17,10 @@ interface RoundPlayProps {
 }
 
 export const RoundPlay: React.FC<RoundPlayProps> = ({ roomData, playerState, onError }) => {
-  const { connection, isConnected, stopRound, submitAnswers } = useSignalR()
+  const { connection, isConnected, stopRound, submitAnswers, requestVoteData } = useSignalR()
   const [answers, setAnswers] = useState<Record<string, string>>({})
   const answersRef = useRef(answers)
+  const roomDataRef = useRef(roomData)
   answersRef.current = answers
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [timeRemaining, setTimeRemaining] = useState(0)
@@ -51,7 +52,7 @@ export const RoundPlay: React.FC<RoundPlayProps> = ({ roomData, playerState, onE
     return () => clearInterval(timer)
   }, [currentRound, voteAnswers])
 
-  // Set up SignalR event listeners
+  // Set up SignalR event listeners for RoundStopped
   useEffect(() => {
     if (!connection || !isConnected) return
 
@@ -70,22 +71,64 @@ export const RoundPlay: React.FC<RoundPlayProps> = ({ roomData, playerState, onE
       }
     }
 
-    const handleVoteStarted = (voteAnswersList: VoteAnswerDto[]) => {
-      console.log('Vote started with answers:', voteAnswersList)
-      console.log('Room state should be Voting:', roomData.state)
-      setVoteAnswers(voteAnswersList || [])
-    }
-
     // Add event listeners
     connection.on('RoundStopped', handleRoundStopped)
-    connection.on('VoteStarted', handleVoteStarted)
 
     // Cleanup event listeners
     return () => {
       connection.off('RoundStopped', handleRoundStopped)
+    }
+  }, [connection, isConnected, submitAnswers, onError])
+  
+  // Update roomDataRef whenever roomData changes
+  useEffect(() => {
+    roomDataRef.current = roomData
+  }, [roomData])
+  
+  // Separate useEffect for VoteStarted to ensure it's not affected by roomData changes
+  useEffect(() => {
+    if (!connection || !isConnected) return
+    
+    const handleVoteStarted = (voteAnswersList: VoteAnswerDto[]) => {
+      console.log('Vote started with answers:', voteAnswersList)
+      console.log('Number of vote answers received:', voteAnswersList?.length || 0)
+      console.log('Room state should be Voting:', roomDataRef.current.state)
+      setVoteAnswers(voteAnswersList || [])
+    }
+    
+    // Add event listener
+    connection.on('VoteStarted', handleVoteStarted)
+    
+    // Cleanup event listener
+    return () => {
       connection.off('VoteStarted', handleVoteStarted)
     }
-  }, [connection, isConnected, roomData, submitAnswers, onError])
+  }, [connection, isConnected]) // Deliberately exclude roomData to prevent re-registering the event handler
+  
+  // Effect to check if we should be in voting phase based on room state
+  useEffect(() => {
+    // If room state is Voting (2) but we don't have vote answers yet,
+    // this means we missed the VoteStarted event
+    if (roomData.state === 2 && voteAnswers.length === 0) {
+      console.log('Room is in voting state but no vote answers, requesting vote data')
+      const fetchVoteData = async () => {
+        try {
+          const voteData = await requestVoteData()
+          if (voteData && voteData.length > 0) {
+            console.log('Successfully retrieved vote data:', voteData)
+            setVoteAnswers(voteData)
+          } else {
+            console.warn('No vote data available')
+          }
+        } catch (error) {
+          console.error('Failed to fetch vote data:', error)
+          onError('Failed to load voting data')
+        }
+      }
+      
+      fetchVoteData()
+    }
+  }, [roomData.state, voteAnswers.length, requestVoteData, onError])
 
   const handleAnswerChange = (topicId: string, value: string) => {
     setAnswers(prev => ({

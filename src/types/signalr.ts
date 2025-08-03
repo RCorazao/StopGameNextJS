@@ -127,7 +127,9 @@ export interface SignalRContextType {
   joinRoom: (roomCode: string, playerName: string) => Promise<{ room: RoomDto; player: PlayerDto } | null>
   leaveRoom: () => Promise<void>
   updateRoomSettings: (roomCode: string, settings: Partial<CreateRoomRequest>) => Promise<void>
-  startRound: (roomCode: string) => Promise<void>
+  startRound: () => Promise<void>
   stopRound: () => Promise<void>
   submitAnswers: (request: SubmitAnswersRequest) => Promise<void>
+  requestVoteData: () => Promise<VoteAnswerDto[] | null>
+  submitVotes: (votes: Record<string, string>) => Promise<void>
 }

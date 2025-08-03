@@ -2,7 +2,7 @@
 
 import React, { createContext, useContext, useEffect, useState, ReactNode } from 'react'
 import { HubConnection, HubConnectionBuilder, LogLevel } from '@microsoft/signalr'
-import { CreateRoomRequest, JoinRoomRequest, RoomDto, SignalRContextType, PlayerState, PlayerDto, SubmitAnswersRequest } from '@/types/signalr'
+import { CreateRoomRequest, JoinRoomRequest, RoomDto, SignalRContextType, PlayerState, PlayerDto, SubmitAnswersRequest, VoteAnswerDto } from '@/types/signalr'
 
 const SignalRContext = createContext<SignalRContextType | undefined>(undefined)
 
@@ -201,7 +201,7 @@ export const SignalRProvider: React.FC<SignalRProviderProps> = ({ children }) =>
     }
   }
 
-  const startRound = async (roomCode: string): Promise<void> => {
+  const startRound = async (): Promise<void> => {
     if (!connection || !isConnected) {
       throw new Error('SignalR not connected')
     }
@@ -243,6 +243,41 @@ export const SignalRProvider: React.FC<SignalRProviderProps> = ({ children }) =>
     }
   }
 
+  const requestVoteData = async (): Promise<VoteAnswerDto[] | null> => {
+    if (!connection || !isConnected) {
+      throw new Error('SignalR not connected')
+    }
+
+    try {
+      // Try to invoke the GetVoteData method on the server
+      const voteData = await connection.invoke('GetVoteData')
+      console.log('Vote data retrieved successfully')
+      return voteData
+    } catch (error) {
+      // If the method doesn't exist on the server, log the error but don't throw
+      // This allows the app to continue functioning even if the backend method isn't implemented yet
+      console.error('Failed to get vote data:', error)
+      
+      // Return empty array instead of throwing to prevent app crashes
+      // The UI will handle this gracefully
+      return []
+    }
+  }
+
+  const submitVotes = async (votes: Record<string, string>): Promise<void> => {
+    if (!connection || !isConnected) {
+      throw new Error('SignalR not connected')
+    }
+
+    try {
+      await connection.invoke('SubmitVotes', votes)
+      console.log('Votes submitted successfully')
+    } catch (error) {
+      console.error('Failed to submit votes:', error)
+      throw error
+    }
+  }
+
   const contextValue: SignalRContextType = {
     connection,
     connectionState,
@@ -255,7 +290,9 @@ export const SignalRProvider: React.FC<SignalRProviderProps> = ({ children }) =>
     updateRoomSettings,
     startRound,
     stopRound,
-    submitAnswers
+    submitAnswers,
+    requestVoteData,
+    submitVotes
   }
 
   return (

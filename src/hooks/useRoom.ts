@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useSignalR } from '@/contexts/SignalRContext'
 import { RoomDto } from '@/types/signalr'
 
@@ -30,7 +30,48 @@ export const useRoom = (roomCode: string) => {
 
     const handleRoomUpdated = (room: RoomDto) => {
       console.log('Room updated:', room)
-      setRoomData(room)
+      
+      // Only update if there are meaningful changes to avoid unnecessary re-renders
+      setRoomData(prevRoom => {
+        if (!prevRoom) return room
+        
+        // Always update if room state changes
+        if (prevRoom.state !== room.state) {
+          console.log(`Room state changed from ${prevRoom.state} to ${room.state}`)
+          return room
+        }
+        
+        // State-specific update logic
+        switch (room.state) {
+          case 0: // Waiting
+            // Update for any player changes or settings changes
+            return room
+            
+          case 1: // Playing
+            // Update for round changes or player changes
+            const roundChanged = (
+              prevRoom.currentRound?.isActive !== room.currentRound?.isActive ||
+              prevRoom.currentRound?.id !== room.currentRound?.id ||
+              prevRoom.currentRound?.letter !== room.currentRound?.letter
+            )
+            return roundChanged || prevRoom.players.length !== room.players.length ? room : prevRoom
+            
+          case 2: // Voting
+            // Only update if player count changes during voting
+            return prevRoom.players.length !== room.players.length ? room : prevRoom
+            
+          case 3: // Results
+            // Always update for score changes
+            return room
+            
+          case 4: // Finished
+            // Only update for player changes
+            return prevRoom.players.length !== room.players.length ? room : prevRoom
+            
+          default:
+            return room
+        }
+      })
     }
 
     const handleRoundStarted = (room: RoomDto) => {

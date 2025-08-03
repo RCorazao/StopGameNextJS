@@ -11,10 +11,15 @@ import { useRoom } from '@/hooks/useRoom'
 import { LoadingSpinner } from '@/components/common/LoadingSpinner'
 import { ErrorDisplay } from '@/components/common/ErrorDisplay'
 import { RoomHeader } from '@/components/room/RoomHeader'
-import { PlayersList } from '@/components/room/PlayersList'
 import { GameControls } from '@/components/room/GameControls'
-import { RoomSettings } from '@/components/room/RoomSettings'
-import { RoundPlay } from '@/components/room/RoundPlay'
+import { RoomState } from '@/types/signalr'
+
+// Import state-specific components
+import { RoomWaiting } from '@/components/room/RoomWaiting'
+import { RoomPlaying } from '@/components/room/RoomPlaying'
+import { RoomVoting } from '@/components/room/RoomVoting'
+import { RoomResults } from '@/components/room/RoomResults'
+import { RoomFinished } from '@/components/room/RoomFinished'
 
 export default function RoomPage() {
   const router = useRouter()
@@ -58,33 +63,62 @@ export default function RoomPage() {
         
         <RoomHeader roomData={roomData} />
         
-        {/* Show player list and room settings only when no active round */}
-        {!(roomData.currentRound && roomData.currentRound.isActive) && (
-          <>
-            <PlayersList roomData={roomData} playerState={playerState} />
-            
-            <RoomSettings 
-              roomData={roomData} 
-              playerState={playerState!} 
-              onError={setError}
-            />
-          </>
-        )}
-        
-        <GameControls 
-          roomData={roomData} 
-          playerState={playerState} 
-          onError={setError}
-        />
-        
-        {/* Show round play when there's an active round */}
-        {roomData.currentRound && roomData.currentRound.isActive && (
-          <RoundPlay 
-            roomData={roomData} 
-            playerState={playerState} 
-            onError={setError}
-          />
-        )}
+        {/* Render the appropriate component based on room state */}
+        {(() => {
+          switch (roomData.state) {
+            case RoomState.Waiting:
+              return (
+                <>
+                  <RoomWaiting 
+                    roomData={roomData} 
+                    playerState={playerState} 
+                    onError={setError}
+                  />
+                  <GameControls 
+                    roomData={roomData} 
+                    playerState={playerState} 
+                    onError={setError}
+                  />
+                </>
+              )
+            case RoomState.Playing:
+              return (
+                <RoomPlaying 
+                  roomData={roomData} 
+                  playerState={playerState} 
+                  onError={setError}
+                />
+              )
+            case RoomState.Voting:
+              return (
+                <RoomVoting 
+                  roomData={roomData} 
+                  playerState={playerState} 
+                  onError={setError}
+                />
+              )
+            case RoomState.Results:
+              return (
+                <RoomResults 
+                  roomData={roomData} 
+                  playerState={playerState} 
+                  onError={setError}
+                />
+              )
+            case RoomState.Finished:
+              return (
+                <RoomFinished 
+                  roomData={roomData} 
+                  playerState={playerState} 
+                  onError={setError}
+                />
+              )
+            default:
+              return (
+                <ErrorDisplay error={`Unknown room state: ${roomData.state}`} />
+              )
+          }
+        })()}
 
         {/* Leave Room */}
         <Card className="backdrop-blur-sm bg-white/80">
