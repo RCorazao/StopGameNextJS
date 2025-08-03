@@ -71,7 +71,7 @@ export const RoomVoting: React.FC<RoomVotingProps> = ({ roomData, playerState, o
         }
       }
       
-      // fetchVoteData()
+      fetchVoteData()
     }
   }, [voteAnswers.length, requestVoteData, onError])
 

@@ -16,22 +16,22 @@ export const RoomResults: React.FC<RoomResultsProps> = ({ roomData, playerState,
   const { connection, isConnected, startRound } = useSignalR()
 
   // Listen for RoomUpdated events to detect state changes
-  useEffect(() => {
-    if (!connection || !isConnected) return
+  // useEffect(() => {
+  //   if (!connection || !isConnected) return
 
-    const handleRoomUpdated = (room: RoomDto) => {
-      console.log('Room updated in results component:', room.state)
-      // No need to update state here as the parent component will handle it
-    }
+  //   const handleRoomUpdated = (room: RoomDto) => {
+  //     console.log('Room updated in results component:', room.state)
+  //     // No need to update state here as the parent component will handle it
+  //   }
 
-    // Add event listener
-    connection.on('RoomUpdated', handleRoomUpdated)
+  //   // Add event listener
+  //   connection.on('RoomUpdated', handleRoomUpdated)
 
-    // Cleanup event listener
-    return () => {
-      connection.off('RoomUpdated', handleRoomUpdated)
-    }
-  }, [connection, isConnected])
+  //   // Cleanup event listener
+  //   return () => {
+  //     connection.off('RoomUpdated', handleRoomUpdated)
+  //   }
+  // }, [connection, isConnected])
 
   const handleStartNextRound = async () => {
     if (!playerState?.isHost) return
