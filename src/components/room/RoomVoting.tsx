@@ -1,11 +1,13 @@
 "use client"
 
 import React, { useState, useEffect } from 'react'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Card, CardContent, CardHeader, CardTitle, CardFooter } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
-import { RoomDto, PlayerState, VoteAnswerDto, AnswerDto } from '@/types/signalr'
+import { RoomDto, PlayerState, VoteAnswerDto, AnswerDto, VoteDto, VoteRequest } from '@/types/signalr'
 import { useSignalR } from '@/contexts/SignalRContext'
+import { ThumbsUp, ThumbsDown, CheckCircle } from 'lucide-react'
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
 
 interface RoomVotingProps {
   roomData: RoomDto
@@ -14,17 +16,19 @@ interface RoomVotingProps {
 }
 
 export const RoomVoting: React.FC<RoomVotingProps> = ({ roomData, playerState, onError }) => {
-  const { connection, isConnected, requestVoteData, submitVotes } = useSignalR()
+  const { connection, isConnected, requestVoteData, submitVotes, vote, finishVotingPhase } = useSignalR()
   const [voteAnswers, setVoteAnswers] = useState<VoteAnswerDto[]>([])
   const [votedAnswers, setVotedAnswers] = useState<Record<string, string>>({})
-  const [isSubmitting, setIsSubmitting] = useState(false)
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // Set up SignalR event listeners for VoteStarted
+  console.log('room: ', roomData);
+
+  // Set up SignalR event listeners for VoteStarted and VoteUpdate
   useEffect(() => {
     if (!connection || !isConnected) return
     
-    const handleVoteStarted = (voteAnswersList: VoteAnswerDto[]) => {
-      console.log('Vote started with answers:', voteAnswersList)
+    const handleVoteData = (voteAnswersList: VoteAnswerDto[]) => {
+      console.log('Vote data received:', voteAnswersList)
       console.log('Number of vote answers received:', voteAnswersList?.length || 0)
       setVoteAnswers(voteAnswersList || [])
     }
@@ -36,12 +40,14 @@ export const RoomVoting: React.FC<RoomVotingProps> = ({ roomData, playerState, o
     }
     
     // Add event listeners
-    connection.on('VoteStarted', handleVoteStarted)
+    connection.on('VoteStarted', handleVoteData)
+    connection.on('VoteUpdate', handleVoteData)
     connection.on('RoomUpdated', handleRoomUpdated)
     
     // Cleanup event listeners
     return () => {
-      connection.off('VoteStarted', handleVoteStarted)
+      connection.off('VoteStarted', handleVoteData)
+      connection.off('VoteUpdate', handleVoteData)
       connection.off('RoomUpdated', handleRoomUpdated)
     }
   }, [connection, isConnected])
@@ -65,15 +71,40 @@ export const RoomVoting: React.FC<RoomVotingProps> = ({ roomData, playerState, o
         }
       }
       
-      fetchVoteData()
+      // fetchVoteData()
     }
   }, [voteAnswers.length, requestVoteData, onError])
 
-  const handleVote = (topicId: string, answerId: string) => {
-    setVotedAnswers(prev => ({
-      ...prev,
-      [topicId]: answerId
-    }))
+  const handleVote = async (answerId: string, isValid: boolean) => {
+    setIsSubmitting(true)
+    try {
+      const voteRequest: VoteRequest = {
+        answerId,
+        isValid
+      }
+      await vote(voteRequest)
+      console.log('Vote submitted:', voteRequest)
+    } catch (error) {
+      console.error('Failed to submit vote:', error)
+      onError('Failed to submit vote')
+    } finally {
+      setIsSubmitting(false)
+    }
+  }
+  
+  const handleFinishVotingPhase = async () => {
+    if (!playerState?.isHost) return
+    
+    setIsSubmitting(true)
+    try {
+      await finishVotingPhase()
+      console.log('Voting phase finished')
+    } catch (error) {
+      console.error('Failed to finish voting phase:', error)
+      onError('Failed to finish voting phase')
+    } finally {
+      setIsSubmitting(false)
+    }
   }
 
   const isAllTopicsVoted = () => {
@@ -112,6 +143,16 @@ export const RoomVoting: React.FC<RoomVotingProps> = ({ roomData, playerState, o
       answersByTopic[voteAnswer.topicId].push(answer)
     })
   })
+  
+  // Helper function to check if the current player has voted for an answer
+  const hasVotedFor = (answer: AnswerDto): boolean => {
+    return votedAnswers[answer.topicId] === answer.id
+  }
+  
+  // Helper function to get vote count for an answer
+  const getVoteCount = (answer: AnswerDto): number => {
+    return answer.votes?.length || 0
+  }
 
   if (voteAnswers.length === 0) {
     return (
@@ -136,45 +177,108 @@ export const RoomVoting: React.FC<RoomVotingProps> = ({ roomData, playerState, o
             const topic = roomData.topics.find(t => t.id === topicId)
             
             return (
-              <div key={topicId} className="space-y-2">
+              <div key={topicId} className="space-y-4">
                 <h3 className="text-lg font-medium">
                   {topic?.name || 'Unknown Topic'}
-                  {/* {topic?.category && (
-                    <Badge variant="outline" className="ml-2">
-                      {topic.category}
-                    </Badge>
-                  )} */}
+                  <Badge variant="outline" className="ml-2">
+                    Letter: {roomData.currentRound?.letter || '?'}
+                  </Badge>
                 </h3>
                 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
-                  {answers.map(answer => (
-                    <Button
-                      key={answer.id}
-                      variant={votedAnswers[topicId] === answer.id ? "default" : "outline"}
-                      className="justify-start h-auto py-2 px-4 text-left"
-                      onClick={() => handleVote(topicId, answer.id)}
-                      disabled={isSubmitting}
-                    >
-                      <div>
-                        <div className="font-medium">{answer.value}</div>
-                        <div className="text-sm text-muted-foreground">{answer.playerName}</div>
+                <div className="space-y-3">
+                  {answers.map(answer => {
+                    const isVoted = hasVotedFor(answer);
+                    const voteCount = getVoteCount(answer);
+                    
+                    return (
+                      <div key={answer.id} className="border rounded-lg p-3 bg-white">
+                        <div className="flex justify-between items-start mb-2">
+                          <div>
+                            <div className="font-medium text-lg">{answer.value}</div>
+                            <div className="text-sm text-muted-foreground">By: {answer.playerName}</div>
+                          </div>
+                          
+                          <div className="flex space-x-2">
+                            <TooltipProvider>
+                              <Tooltip>
+                                <TooltipTrigger asChild>
+                                  <Button 
+                                    size="sm" 
+                                    variant="outline"
+                                    className="bg-green-100 text-green-800 hover:bg-green-200"
+                                    onClick={() => handleVote(answer.id, true)}
+                                    disabled={isSubmitting}
+                                  >
+                                    <ThumbsUp className="h-4 w-4" />
+                                  </Button>
+                                </TooltipTrigger>
+                                <TooltipContent>
+                                  <p>Like this answer</p>
+                                </TooltipContent>
+                              </Tooltip>
+                            </TooltipProvider>
+                            
+                            <TooltipProvider>
+                              <Tooltip>
+                                <TooltipTrigger asChild>
+                                  <Button 
+                                    size="sm" 
+                                    variant="outline"
+                                    className="bg-red-100 text-red-800 hover:bg-red-200"
+                                    onClick={() => handleVote(answer.id, false)}
+                                    disabled={isSubmitting}
+                                  >
+                                    <ThumbsDown className="h-4 w-4" />
+                                  </Button>
+                                </TooltipTrigger>
+                                <TooltipContent>
+                                  <p>Dislike this answer</p>
+                                </TooltipContent>
+                              </Tooltip>
+                            </TooltipProvider>
+                          </div>
+                        </div>
+                        
+                        {answer.votes && answer.votes.length > 0 && (
+                          <div className="mt-2">
+                            <h4 className="text-sm font-medium mb-1">Votes:</h4>
+                            <div className="flex flex-wrap gap-1">
+                              {answer.votes.map((vote, index) => (
+                                <Badge 
+                                  key={index} 
+                                  variant={vote.isValid ? "default" : "outline"}
+                                  className={vote.isValid ? "bg-green-100 text-green-800 hover:bg-green-200" : "bg-red-100 text-red-800 hover:bg-red-200"}
+                                >
+                                  {vote.voterName}
+                                  {vote.isValid ? 
+                                    <ThumbsUp className="h-3 w-3 ml-1" /> : 
+                                    <ThumbsDown className="h-3 w-3 ml-1" />}
+                                </Badge>
+                              ))}
+                            </div>
+                          </div>
+                        )}
                       </div>
-                    </Button>
-                  ))}
+                    );
+                  })}
                 </div>
               </div>
             )
           })}
-
-          <Button 
-            onClick={handleSubmitVotes} 
-            className="w-full mt-4"
-            disabled={!isAllTopicsVoted() || isSubmitting}
-          >
-            Submit Votes
-          </Button>
         </div>
       </CardContent>
+      {playerState?.isHost && (
+        <CardFooter className="flex justify-center pt-2 pb-6">
+          <Button 
+            onClick={handleFinishVotingPhase} 
+            disabled={isSubmitting}
+            className="bg-blue-500 hover:bg-blue-600 text-white"
+          >
+            <CheckCircle className="h-4 w-4 mr-2" />
+            Finish Voting Phase
+          </Button>
+        </CardFooter>
+      )}
     </Card>
   )
 }

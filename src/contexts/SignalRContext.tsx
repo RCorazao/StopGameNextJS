@@ -278,6 +278,34 @@ export const SignalRProvider: React.FC<SignalRProviderProps> = ({ children }) =>
     }
   }
 
+  const vote = async (request: { answerId: string, isValid: boolean }): Promise<void> => {
+    if (!connection || !isConnected) {
+      throw new Error('SignalR not connected')
+    }
+
+    try {
+      await connection.invoke('Vote', request)
+      console.log('Vote submitted successfully')
+    } catch (error) {
+      console.error('Failed to submit vote:', error)
+      throw error
+    }
+  }
+
+  const finishVotingPhase = async (): Promise<void> => {
+    if (!connection || !isConnected) {
+      throw new Error('SignalR not connected')
+    }
+
+    try {
+      await connection.invoke('FinishVotingPhase')
+      console.log('Voting phase finished successfully')
+    } catch (error) {
+      console.error('Failed to finish voting phase:', error)
+      throw error
+    }
+  }
+
   const contextValue: SignalRContextType = {
     connection,
     connectionState,
@@ -292,7 +320,9 @@ export const SignalRProvider: React.FC<SignalRProviderProps> = ({ children }) =>
     stopRound,
     submitAnswers,
     requestVoteData,
-    submitVotes
+    submitVotes,
+    vote,
+    finishVotingPhase
   }
 
   return (

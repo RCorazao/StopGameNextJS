@@ -89,9 +89,7 @@ export const RoomPlaying: React.FC<RoomPlayingProps> = ({ roomData, playerState,
     })
   }
 
-  const handleStopRound = async () => {
-    if (!playerState?.isHost) return
-    
+  const handleStopRound = async () => {  
     try {
       await stopRound()
     } catch (error) {
@@ -151,21 +149,19 @@ export const RoomPlaying: React.FC<RoomPlayingProps> = ({ roomData, playerState,
             </div>
           ))}
 
-          {playerState?.isHost && (
-            <Button 
-              onClick={handleStopRound} 
-              className="w-full mt-4"
-              disabled={isSubmitting}
-            >
-              Stop Round
-            </Button>
-          )}
+          <Button 
+            onClick={handleStopRound} 
+            className="w-full mt-4"
+            disabled={isSubmitting}
+          >
+            Stop Round
+          </Button>
 
-          {timeRemaining === 0 && !playerState?.isHost && (
+          {/* {timeRemaining === 0 && !playerState?.isHost && (
             <div className="text-center mt-4">
               <p>Time's up! Waiting for host to end the round...</p>
             </div>
-          )}
+          )} */}
         </div>
       </CardContent>
     </Card>

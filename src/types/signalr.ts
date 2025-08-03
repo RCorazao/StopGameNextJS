@@ -28,6 +28,11 @@ export interface SubmitAnswersRequest {
   answers: { [topicId: string]: string };
 }
 
+export interface VoteRequest {
+  answerId: string
+  isValid: boolean
+}
+
 export interface RoomDto {
   id: string
   code: string
@@ -132,4 +137,6 @@ export interface SignalRContextType {
   submitAnswers: (request: SubmitAnswersRequest) => Promise<void>
   requestVoteData: () => Promise<VoteAnswerDto[] | null>
   submitVotes: (votes: Record<string, string>) => Promise<void>
+  vote: (request: VoteRequest) => Promise<void>
+  finishVotingPhase: () => Promise<void>
 }
