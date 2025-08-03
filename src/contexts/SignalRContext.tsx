@@ -2,7 +2,7 @@
 
 import React, { createContext, useContext, useEffect, useState, ReactNode } from 'react'
 import { HubConnection, HubConnectionBuilder, LogLevel } from '@microsoft/signalr'
-import { CreateRoomRequest, JoinRoomRequest, RoomDto, SignalRContextType, PlayerState, PlayerDto } from '@/types/signalr'
+import { CreateRoomRequest, JoinRoomRequest, RoomDto, SignalRContextType, PlayerState, PlayerDto, SubmitAnswersRequest } from '@/types/signalr'
 
 const SignalRContext = createContext<SignalRContextType | undefined>(undefined)
 
@@ -215,6 +215,34 @@ export const SignalRProvider: React.FC<SignalRProviderProps> = ({ children }) =>
     }
   }
 
+  const stopRound = async (): Promise<void> => {
+    if (!connection || !isConnected) {
+      throw new Error('SignalR not connected')
+    }
+
+    try {
+      await connection.invoke('Stop')
+      console.log('Round stopped successfully')
+    } catch (error) {
+      console.error('Failed to stop round:', error)
+      throw error
+    }
+  }
+
+  const submitAnswers = async (request: SubmitAnswersRequest): Promise<void> => {
+    if (!connection || !isConnected) {
+      throw new Error('SignalR not connected')
+    }
+
+    try {
+      await connection.invoke('SubmitAnswers', request)
+      console.log('Answers submitted successfully')
+    } catch (error) {
+      console.error('Failed to submit answers:', error)
+      throw error
+    }
+  }
+
   const contextValue: SignalRContextType = {
     connection,
     connectionState,
@@ -225,7 +253,9 @@ export const SignalRProvider: React.FC<SignalRProviderProps> = ({ children }) =>
     joinRoom,
     leaveRoom,
     updateRoomSettings,
-    startRound
+    startRound,
+    stopRound,
+    submitAnswers
   }
 
   return (

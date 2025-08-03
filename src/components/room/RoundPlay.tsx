@@ -1,13 +1,13 @@
 "use client"
 
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useRef } from 'react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Badge } from '@/components/ui/badge'
 import { Clock, Send } from 'lucide-react'
-import { RoomDto, PlayerState, RoundDto, AnswerDto } from '@/types/signalr'
+import { RoomDto, PlayerState, SubmitAnswersRequest, VoteAnswerDto } from '@/types/signalr'
 import { useSignalR } from '@/contexts/SignalRContext'
 
 interface RoundPlayProps {
@@ -17,15 +17,23 @@ interface RoundPlayProps {
 }
 
 export const RoundPlay: React.FC<RoundPlayProps> = ({ roomData, playerState, onError }) => {
-  const { connection, isConnected } = useSignalR()
+  const { connection, isConnected, stopRound, submitAnswers } = useSignalR()
   const [answers, setAnswers] = useState<Record<string, string>>({})
+  const answersRef = useRef(answers)
+  answersRef.current = answers
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [timeRemaining, setTimeRemaining] = useState(0)
+  const [voteAnswers, setVoteAnswers] = useState<VoteAnswerDto[]>([])
 
   const currentRound = roomData.currentRound
 
   // Update timer
   useEffect(() => {
+    if (voteAnswers.length > 0) {
+      setTimeRemaining(0)
+      return
+    }
+
     if (!currentRound || !currentRound.isActive) return
 
     setTimeRemaining(currentRound.timeRemainingSeconds)
@@ -41,12 +49,48 @@ export const RoundPlay: React.FC<RoundPlayProps> = ({ roomData, playerState, onE
     }, 1000)
 
     return () => clearInterval(timer)
-  }, [currentRound])
+  }, [currentRound, voteAnswers])
 
-  const handleAnswerChange = (topicName: string, value: string) => {
+  // Set up SignalR event listeners
+  useEffect(() => {
+    if (!connection || !isConnected) return
+
+    const handleRoundStopped = async (room: RoomDto) => {
+      console.log('Round stopped, submitting answers:', answersRef.current)
+      setIsSubmitting(false)
+      try {
+        const request: SubmitAnswersRequest = {
+          answers: answersRef.current,
+        }
+
+        await submitAnswers(request)
+      } catch (error) {
+        console.error('Failed to submit answers after round stopped:', error)
+        onError('Failed to submit answers')
+      }
+    }
+
+    const handleVoteStarted = (voteAnswersList: VoteAnswerDto[]) => {
+      console.log('Vote started with answers:', voteAnswersList)
+      console.log('Room state should be Voting:', roomData.state)
+      setVoteAnswers(voteAnswersList || [])
+    }
+
+    // Add event listeners
+    connection.on('RoundStopped', handleRoundStopped)
+    connection.on('VoteStarted', handleVoteStarted)
+
+    // Cleanup event listeners
+    return () => {
+      connection.off('RoundStopped', handleRoundStopped)
+      connection.off('VoteStarted', handleVoteStarted)
+    }
+  }, [connection, isConnected, roomData, submitAnswers, onError])
+
+  const handleAnswerChange = (topicId: string, value: string) => {
     setAnswers(prev => ({
       ...prev,
-      [topicName]: value
+      [topicId]: value
     }))
   }
 
@@ -55,21 +99,14 @@ export const RoundPlay: React.FC<RoundPlayProps> = ({ roomData, playerState, onE
 
     setIsSubmitting(true)
     try {
-      const submissionAnswers: AnswerDto[] = Object.entries(answers)
-        .filter(([_, answer]) => answer.trim() !== '')
-        .map(([topicName, word]) => ({
-          word: word.trim(),
-          topicName
-        }))
-
-      await connection.invoke('SubmitAnswers', roomData.code, submissionAnswers)
-      console.log('Answers submitted successfully')
+      await stopRound()
+      console.log('Round stop initiated successfully')
     } catch (error) {
-      console.error('Failed to submit answers:', error)
-      onError('Failed to submit answers. Please try again.')
-    } finally {
+      console.error('Failed to stop round:', error)
+      onError('Failed to stop round. Please try again.')
       setIsSubmitting(false)
     }
+    // Note: setIsSubmitting(false) will be called when RoundStopped event is received
   }
 
   const formatTime = (seconds: number) => {
@@ -82,6 +119,56 @@ export const RoundPlay: React.FC<RoundPlayProps> = ({ roomData, playerState, onE
     if (timeRemaining > 30) return 'text-green-600'
     if (timeRemaining > 10) return 'text-yellow-600'
     return 'text-red-600'
+  }
+
+  // Show voting phase if we have vote answers
+  if (voteAnswers.length > 0) {
+    console.log('Rendering voting phase UI')
+    return (
+      <Card className="backdrop-blur-sm bg-white/90">
+        <CardHeader>
+          <CardTitle className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <span>Voting Phase - Round {roomData.rounds.length}</span>
+              <Badge variant="outline" className="text-lg font-bold">
+                Letter: {currentRound?.letter.toUpperCase()}
+              </Badge>
+            </div>
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="text-sm text-gray-600 text-center">
+            Review all answers and vote on their validity
+          </div>
+          
+          <div className="space-y-6">
+            {voteAnswers.map((voteAnswer, topicIndex) => (
+              <div key={topicIndex} className="space-y-2">
+                <Label className="text-lg font-semibold">{voteAnswer.topicName}</Label>
+                <div className="grid gap-2">
+                  {voteAnswer.answers.map((answer, answerIndex) => (
+                    <div key={answerIndex} className="flex items-center justify-between p-3 border rounded-md">
+                      <div className="flex-1">
+                        <span className="font-medium">{answer.value}</span>
+                        <span className="text-sm text-gray-500 ml-2">by {answer.playerName}</span>
+                      </div>
+                      <div className="flex gap-2">
+                        <Button size="sm" variant="outline" className="text-green-600 border-green-600">
+                          Valid
+                        </Button>
+                        <Button size="sm" variant="outline" className="text-red-600 border-red-600">
+                          Invalid
+                        </Button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            ))}
+          </div>
+        </CardContent>
+      </Card>
+    )
   }
 
   if (!currentRound) {
@@ -118,8 +205,8 @@ export const RoundPlay: React.FC<RoundPlayProps> = ({ roomData, playerState, onE
               <Input
                 id={`topic-${index}`}
                 placeholder={`Word starting with ${currentRound.letter.toUpperCase()}...`}
-                value={answers[topic.name] || ''}
-                onChange={(e) => handleAnswerChange(topic.name, e.target.value)}
+                value={answers[topic.id] || ''}
+                onChange={(e) => handleAnswerChange(topic.id, e.target.value)}
                 disabled={!currentRound.isActive || timeRemaining === 0}
                 className="text-center"
               />

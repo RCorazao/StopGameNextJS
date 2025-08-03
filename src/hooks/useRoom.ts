@@ -38,9 +38,9 @@ export const useRoom = (roomCode: string) => {
       setRoomData(room)
     }
 
-    const handleRoundStopped = (room: RoomDto) => {
-      console.log('Round ended:', room)
-      setRoomData(room)
+    const handleRoundStopped = () => {
+      console.log('Round ended - signal received')
+      // RoundStopped event doesn't contain room data, just a signal
     }
 
     const handleError = (error: string) => {

@@ -24,6 +24,10 @@ export interface UpdateRoomSettingsRequest {
   maxRounds?: number
 }
 
+export interface SubmitAnswersRequest {
+  answers: { [topicId: string]: string };
+}
+
 export interface RoomDto {
   id: string
   code: string
@@ -45,7 +49,8 @@ export enum RoomState {
   Waiting = 0,
   Playing = 1,
   Voting = 2,
-  Finished = 3
+  Results = 3,
+  Finished = 4
 }
 
 export interface PlayerDto {
@@ -71,21 +76,9 @@ export interface RoundDto {
   letter: string
   startedAt: string
   endedAt: string
-  submissions: SubmissionDto[]
-  votes: VoteDto[]
+  answers: AnswerDto[]
   isActive: boolean
   timeRemainingSeconds: number
-}
-
-export interface SubmissionDto {
-  id: string
-  playerName: string
-  topicName: string
-  answer: AnswerDto
-  submittedAt: string
-  isValid: boolean
-  votesValid: number
-  votesInvalid: number
 }
 
 export interface VoteDto {
@@ -93,14 +86,27 @@ export interface VoteDto {
   voterName: string
   answerOwnerId: string
   answerOwnerName: string
+  topicId: string
   topicName: string
   isValid: boolean
   createdAt: string
 }
 
 export interface AnswerDto {
-  word: string
+  id: string
+  topicId: string
+  playerId: string
+  playerName: string
   topicName: string
+  value: string
+  createdAt: string
+  votes: VoteDto[]
+}
+
+export interface VoteAnswerDto {
+  topicId: string
+  topicName: string
+  answers: AnswerDto[]
 }
 
 export interface PlayerState {
@@ -122,4 +128,6 @@ export interface SignalRContextType {
   leaveRoom: () => Promise<void>
   updateRoomSettings: (roomCode: string, settings: Partial<CreateRoomRequest>) => Promise<void>
   startRound: (roomCode: string) => Promise<void>
+  stopRound: () => Promise<void>
+  submitAnswers: (request: SubmitAnswersRequest) => Promise<void>
 }
