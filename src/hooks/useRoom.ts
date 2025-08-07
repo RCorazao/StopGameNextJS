@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect } from 'react'
 import { useSignalR } from '@/contexts/SignalRContext'
 import { RoomDto } from '@/types/signalr'
 

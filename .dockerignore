@@ -1,0 +1,38 @@
+# Dependencies
+node_modules
+
+# Testing
+coverage
+
+# Next.js build output
+.next
+out
+
+# Misc
+.DS_Store
+*.pem
+
+# Debug
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Local env files
+.env*.local
+# .env is now commented out to allow it to be used in the container
+
+# Vercel
+.vercel
+
+# Docker files
+Dockerfile
+docker-compose.yml
+.dockerignore
+
+# Git
+.git
+.gitignore
+
+# Documentation
+README.md
+DOCKER_DEPLOYMENT.md

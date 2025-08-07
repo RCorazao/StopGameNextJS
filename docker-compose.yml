@@ -1,0 +1,32 @@
+version: '3'
+
+services:
+  nextjs:
+    container_name: stop-game
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        # Pass environment variables to build stage
+        - NEXT_PUBLIC_SIGNALR_HUB_URL=${NEXT_PUBLIC_SIGNALR_HUB_URL}
+    restart: always
+    ports:
+      - "3000:3000"
+    env_file:
+      - .env
+    environment:
+      - NODE_ENV=production
+      - NEXT_PUBLIC_SIGNALR_HUB_URL=${NEXT_PUBLIC_SIGNALR_HUB_URL:-/gameHub}
+    # Add healthcheck
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:3000"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+    # Add resource limits
+    # deploy:
+    #   resources:
+    #     limits:
+    #       cpus: '1'
+    #       memory: 1G

@@ -19,7 +19,7 @@ export const GameControls: React.FC<GameControlsProps> = ({ roomData, playerStat
     if (!playerState?.isHost) return
     
     try {
-      await startRound(roomData.code)
+      await startRound()
     } catch (error) {
       console.error('Failed to start round:', error)
       onError('Failed to start round. Please try again.')
