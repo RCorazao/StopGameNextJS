@@ -1,6 +1,6 @@
 "use client"
 
-import React, { useEffect } from 'react'
+import React from 'react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { RoomDto, PlayerState } from '@/types/signalr'
@@ -13,7 +13,7 @@ interface RoomResultsProps {
 }
 
 export const RoomResults: React.FC<RoomResultsProps> = ({ roomData, playerState, onError }) => {
-  const { connection, isConnected, startRound } = useSignalR()
+  const { startRound } = useSignalR()
 
   // Listen for RoomUpdated events to detect state changes
   // useEffect(() => {

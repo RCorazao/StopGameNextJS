@@ -1,7 +1,6 @@
 "use client"
 
 import React, { useEffect } from 'react'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { PlayerState, RoomDto, RoomState } from '@/types/signalr'
 import { useSignalR } from '@/contexts/SignalRContext'
 import { PlayersList } from './PlayersList'

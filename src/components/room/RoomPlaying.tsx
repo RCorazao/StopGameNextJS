@@ -5,9 +5,8 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { Badge } from '@/components/ui/badge'
 import { Clock, Send } from 'lucide-react'
-import { RoomDto, PlayerState, SubmitAnswersRequest, VoteAnswerDto, RoomState } from '@/types/signalr'
+import { RoomDto, PlayerState, SubmitAnswersRequest } from '@/types/signalr'
 import { useSignalR } from '@/contexts/SignalRContext'
 
 interface RoomPlayingProps {
@@ -36,6 +35,9 @@ export const RoomPlaying: React.FC<RoomPlayingProps> = ({ roomData, playerState,
       setTimeRemaining(prev => {
         if (prev <= 1) {
           clearInterval(timer)
+          if (playerState?.isHost) {
+            handleStopRound()
+          }
           return 0
         }
         return prev - 1
@@ -64,20 +66,12 @@ export const RoomPlaying: React.FC<RoomPlayingProps> = ({ roomData, playerState,
       }
     }
 
-    // Listen for room updates to detect state changes
-    const handleRoomUpdated = (room: RoomDto) => {
-      console.log('Room updated in playing component:', room.state)
-      // No need to update state here as the parent component will handle it
-    }
-
     // Add event listeners
     connection.on('RoundStopped', handleRoundStopped)
-    connection.on('RoomUpdated', handleRoomUpdated)
 
     // Cleanup event listeners
     return () => {
       connection.off('RoundStopped', handleRoundStopped)
-      connection.off('RoomUpdated', handleRoomUpdated)
     }
   }, [connection, isConnected, submitAnswers, onError])
 
@@ -96,6 +90,33 @@ export const RoomPlaying: React.FC<RoomPlayingProps> = ({ roomData, playerState,
       console.error('Failed to stop round:', error)
       onError('Failed to stop round')
     }
+  }
+
+  const canSubmitAnswers = (): boolean => {
+    if (!currentRound || timeRemaining === 0 || isSubmitting) return false
+    
+    const allTopicsFilled = roomData.topics.every(topic => 
+      answers[topic.id] && answers[topic.id].trim() !== ''
+    )
+    
+    const allAnswersStartWithLetter = roomData.topics.every(topic => {
+      const answer = answers[topic.id]
+      if (!answer || answer.trim() === '') return false
+      return answer.trim().toLowerCase().startsWith(currentRound.letter.toLowerCase())
+    })
+    
+    return allTopicsFilled && allAnswersStartWithLetter
+  }
+
+  const getInputError = (topicId: string): string | null => {
+    const answer = answers[topicId]
+    if (!answer || answer.trim() === '') return null
+    
+    if (!answer.trim().toLowerCase().startsWith(currentRound?.letter.toLowerCase() || '')) {
+      return `Must start with "${currentRound?.letter}"`
+    }
+    
+    return null
   }
 
   const formatTime = (seconds: number): string => {
@@ -129,39 +150,53 @@ export const RoomPlaying: React.FC<RoomPlayingProps> = ({ roomData, playerState,
       </CardHeader>
       <CardContent>
         <div className="space-y-4">
-          {roomData.topics.map(topic => (
-            <div key={topic.id} className="space-y-2">
-              <Label htmlFor={topic.id}>
-                {topic.name}
-                {/* {topic.category && (
-                  <Badge variant="outline" className="ml-2">
-                    {topic.category}
-                  </Badge>
-                )} */}
-              </Label>
-              <Input
-                id={topic.id}
-                value={answers[topic.id] || ''}
-                onChange={(e) => handleAnswerChange(topic.id, e.target.value)}
-                placeholder={`${currentRound.letter}...`}
-                disabled={timeRemaining === 0 || isSubmitting}
-              />
-            </div>
-          ))}
+          {roomData.topics.map(topic => {
+            const error = getInputError(topic.id)
+            return (
+              <div key={topic.id} className="space-y-2">
+                <Label htmlFor={topic.id}>
+                  {topic.name}
+                </Label>
+                <Input
+                  id={topic.id}
+                  value={answers[topic.id] || ''}
+                  onChange={(e) => handleAnswerChange(topic.id, e.target.value)}
+                  placeholder={`${currentRound.letter}...`}
+                  disabled={timeRemaining === 0 || isSubmitting}
+                  className={error ? 'border-red-500' : ''}
+                />
+                {error && (
+                  <p className="text-sm text-red-500">{error}</p>
+                )}
+              </div>
+            )
+          })}
 
-          <Button 
-            onClick={handleStopRound} 
-            className="w-full mt-4"
-            disabled={isSubmitting}
-          >
-            Stop Round
-          </Button>
+          <div className="space-y-2">
+            <Button 
+              onClick={handleStopRound} 
+              className="w-full"
+              disabled={!canSubmitAnswers()}
+            >
+              <Send className="w-4 h-4 mr-2" />
+              Stop Round
+            </Button>
+          </div>
 
-          {/* {timeRemaining === 0 && !playerState?.isHost && (
-            <div className="text-center mt-4">
-              <p>Time's up! Waiting for host to end the round...</p>
+          {!canSubmitAnswers() && timeRemaining > 0 && !isSubmitting && (
+            <div className="text-center text-sm text-gray-600">
+              {!roomData.topics.every(topic => answers[topic.id] && answers[topic.id].trim() !== '') && (
+                <p>Fill in all topics to submit</p>
+              )}
+              {roomData.topics.every(topic => answers[topic.id] && answers[topic.id].trim() !== '') &&
+               !roomData.topics.every(topic => {
+                 const answer = answers[topic.id]
+                 return answer && answer.trim().toLowerCase().startsWith(currentRound.letter.toLowerCase())
+               }) && (
+                <p>All answers must start with "{currentRound.letter}"</p>
+              )}
             </div>
-          )} */}
+          )}
         </div>
       </CardContent>
     </Card>

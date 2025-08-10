@@ -13,7 +13,7 @@ interface GameControlsProps {
 }
 
 export const GameControls: React.FC<GameControlsProps> = ({ roomData, playerState, onError }) => {
-  const { connection, isConnected, startRound } = useSignalR()
+  const { startRound } = useSignalR()
 
   const handleStartRound = async () => {
     if (!playerState?.isHost) return

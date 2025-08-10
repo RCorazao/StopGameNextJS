@@ -80,12 +80,12 @@ export const RoomFinished: React.FC<RoomFinishedProps> = ({ roomData, playerStat
             </div>
           </div>
 
-          <Button 
+          {/* <Button 
             onClick={handleLeaveRoom} 
             className="w-full mt-4"
           >
             Leave Room
-          </Button>
+          </Button> */}
         </div>
       </CardContent>
     </Card>

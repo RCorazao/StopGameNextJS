@@ -5,7 +5,7 @@ import { useSignalR } from '@/contexts/SignalRContext'
 import { RoomDto } from '@/types/signalr'
 
 export const useRoom = (roomCode?: string) => {
-  const { connection, isConnected, playerState } = useSignalR()
+  const { connection, isConnected, playerState, setPlayerState } = useSignalR()
   const [roomData, setRoomData] = useState<RoomDto | null>(null)
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState('')
@@ -80,6 +80,15 @@ export const useRoom = (roomCode?: string) => {
             return room
         }
       })
+
+      const player = room.players.find(p => p.id === playerState?.id)
+      if (player && playerState.isHost != player?.isHost) {
+        setPlayerState({
+          ...playerState,
+          isHost: player?.isHost
+        })
+      }
+
     }
 
     const handleRoundStarted = (room: RoomDto) => {

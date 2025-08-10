@@ -4,7 +4,7 @@ import React, { useState, useEffect } from 'react'
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
-import { RoomDto, PlayerState, VoteAnswerDto, AnswerDto, VoteDto, VoteRequest } from '@/types/signalr'
+import { RoomDto, PlayerState, VoteAnswerDto, AnswerDto, VoteRequest } from '@/types/signalr'
 import { useSignalR } from '@/contexts/SignalRContext'
 import { ThumbsUp, ThumbsDown, CheckCircle } from 'lucide-react'
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
@@ -58,13 +58,7 @@ export const RoomVoting: React.FC<RoomVotingProps> = ({ roomData, playerState, o
       console.log('No vote answers, requesting vote data')
       const fetchVoteData = async () => {
         try {
-          const voteData = await requestVoteData()
-          if (voteData && voteData.length > 0) {
-            console.log('Successfully retrieved vote data:', voteData)
-            setVoteAnswers(voteData)
-          } else {
-            console.warn('No vote data available')
-          }
+          await requestVoteData() 
         } catch (error) {
           console.error('Failed to fetch vote data:', error)
           onError('Failed to load voting data')
@@ -154,17 +148,17 @@ export const RoomVoting: React.FC<RoomVotingProps> = ({ roomData, playerState, o
     return answer.votes?.length || 0
   }
 
-  if (voteAnswers.length === 0) {
-    return (
-      <Card className="backdrop-blur-sm bg-white/80">
-        <CardContent className="pt-6">
-          <div className="text-center">
-            <p>Loading voting data...</p>
-          </div>
-        </CardContent>
-      </Card>
-    )
-  }
+  // if (voteAnswers.length === 0) {
+  //   return (
+  //     <Card className="backdrop-blur-sm bg-white/80">
+  //       <CardContent className="pt-6">
+  //         <div className="text-center">
+  //           <p>Loading voting data...</p>
+  //         </div>
+  //       </CardContent>
+  //     </Card>
+  //   )
+  // }
 
   return (
     <Card className="backdrop-blur-sm bg-white/80">
