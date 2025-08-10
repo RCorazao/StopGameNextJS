@@ -2,7 +2,7 @@
 
 import React, { createContext, useContext, useEffect, useState, ReactNode } from 'react'
 import { HubConnection, HubConnectionBuilder, LogLevel } from '@microsoft/signalr'
-import { CreateRoomRequest, JoinRoomRequest, RoomDto, SignalRContextType, PlayerState, PlayerDto, SubmitAnswersRequest, VoteAnswerDto } from '@/types/signalr'
+import { CreateRoomRequest, JoinRoomRequest, ReconnectRoomRequest, RoomDto, SignalRContextType, PlayerState, PlayerDto, SubmitAnswersRequest, VoteAnswerDto } from '@/types/signalr'
 
 const SignalRContext = createContext<SignalRContextType | undefined>(undefined)
 
@@ -51,10 +51,20 @@ export const SignalRProvider: React.FC<SignalRProviderProps> = ({ children }) =>
       setIsConnected(false)
     })
 
-    newConnection.onreconnected((connectionId) => {
+    newConnection.onreconnected(async (connectionId) => {
       console.log('SignalR reconnected with ID:', connectionId)
       setConnectionState('Connected')
       setIsConnected(true)
+      
+      // Attempt to reconnect to room if player state exists
+      if (playerState?.roomCode && playerState?.id) {
+        console.log('Attempting to reconnect to room after connection restored')
+        try {
+          await reconnectRoom({ roomCode: playerState.roomCode, playerId: playerState.id })
+        } catch (error) {
+          console.error('Failed to reconnect to room:', error)
+        }
+      }
     })
 
     newConnection.onclose((error) => {
@@ -72,6 +82,16 @@ export const SignalRProvider: React.FC<SignalRProviderProps> = ({ children }) =>
         setConnectionState('Connected')
         setIsConnected(true)
         setConnection(newConnection)
+
+        // On fresh connection (e.g., F5), attempt to reconnect player to room using saved state
+        if (playerState?.roomCode && playerState?.id) {
+          try {
+            await newConnection.invoke('ReconnectRoom', { roomCode: playerState.roomCode, playerId: playerState.id })
+            console.log('ReconnectRoom invoked successfully on initial connect')
+          } catch (err) {
+            console.error('Failed to invoke ReconnectRoom on initial connect:', err)
+          }
+        }
       } catch (error) {
         console.error('SignalR connection failed:', error)
         setConnectionState('Failed')
@@ -172,6 +192,20 @@ export const SignalRProvider: React.FC<SignalRProviderProps> = ({ children }) =>
     })
   }
 
+  // Reconnect current player to a room using saved identifiers
+  const reconnectRoom = async (request: ReconnectRoomRequest): Promise<void> => {
+    if (!connection || !isConnected) {
+      throw new Error('SignalR not connected')
+    }
+    try {
+      await connection.invoke('ReconnectRoom', request)
+      console.log('ReconnectRoom invoked successfully')
+    } catch (error) {
+      console.error('Failed to invoke ReconnectRoom:', error)
+      throw error
+    }
+  }
+
   const leaveRoom = async (): Promise<void> => {
     if (!connection || !isConnected) {
       return
@@ -179,9 +213,12 @@ export const SignalRProvider: React.FC<SignalRProviderProps> = ({ children }) =>
 
     try {
       await connection.invoke('LeaveRoom')
-      console.log('Left room successfully')
       // Clear player state when leaving room
+      if (typeof window !== 'undefined') {
+        localStorage.removeItem('playerState')
+      }
       setPlayerState(null)
+      console.log('Left room successfully')
     } catch (error) {
       console.error('Failed to leave room:', error)
     }
@@ -314,6 +351,7 @@ export const SignalRProvider: React.FC<SignalRProviderProps> = ({ children }) =>
     setPlayerState,
     createRoom,
     joinRoom,
+    reconnectRoom,
     leaveRoom,
     updateRoomSettings,
     startRound,

@@ -25,7 +25,7 @@ export default function RoomPage() {
   const router = useRouter()
   const { playerState, leaveRoom } = useSignalR()
   const roomCode = playerState?.roomCode;
-  const { roomData, isLoading, error, setError } = useRoom(roomCode!)
+  const { roomData, isLoading, error, setError } = useRoom(roomCode)
 
   // Redirect to home if no player state is available
   useEffect(() => {

@@ -16,6 +16,11 @@ export interface JoinRoomRequest {
   playerName: string
 }
 
+export interface ReconnectRoomRequest {
+  roomCode: string
+  playerId: string
+}
+
 export interface UpdateRoomSettingsRequest {
   topics: string[]
   maxPlayers?: number
@@ -130,6 +135,7 @@ export interface SignalRContextType {
   setPlayerState: (state: PlayerState | null) => void
   createRoom: (hostName: string, options?: Partial<CreateRoomRequest>) => Promise<{ room: RoomDto; player: PlayerDto } | null>
   joinRoom: (roomCode: string, playerName: string) => Promise<{ room: RoomDto; player: PlayerDto } | null>
+  reconnectRoom: (request: ReconnectRoomRequest) => Promise<void>
   leaveRoom: () => Promise<void>
   updateRoomSettings: (roomCode: string, settings: Partial<CreateRoomRequest>) => Promise<void>
   startRound: () => Promise<void>

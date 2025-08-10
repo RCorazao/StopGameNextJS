@@ -4,17 +4,23 @@ import { useState, useEffect } from 'react'
 import { useSignalR } from '@/contexts/SignalRContext'
 import { RoomDto } from '@/types/signalr'
 
-export const useRoom = (roomCode: string) => {
-  const { connection, isConnected } = useSignalR()
+export const useRoom = (roomCode?: string) => {
+  const { connection, isConnected, playerState } = useSignalR()
   const [roomData, setRoomData] = useState<RoomDto | null>(null)
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState('')
 
   useEffect(() => {
+    // Do nothing if not connected or if there is no valid player/room association
     if (!connection || !isConnected) return
+    if (!roomCode) return
+    if (!playerState || playerState.roomCode !== roomCode) return
+
+    let isActive = true
 
     // Set up SignalR event listeners
     const handleRoomCreated = (room: RoomDto) => {
+      if (!isActive) return
       console.log('Room created, received room:', room)
       setRoomData(room)
       setIsLoading(false)
@@ -22,6 +28,7 @@ export const useRoom = (roomCode: string) => {
     }
 
     const handleRoomJoined = (room: RoomDto) => {
+      if (!isActive) return
       console.log('Room joined, received room:', room)
       setRoomData(room)
       setIsLoading(false)
@@ -29,6 +36,7 @@ export const useRoom = (roomCode: string) => {
     }
 
     const handleRoomUpdated = (room: RoomDto) => {
+      if (!isActive) return
       console.log('Room updated:', room)
       
       // Only update if there are meaningful changes to avoid unnecessary re-renders
@@ -75,16 +83,19 @@ export const useRoom = (roomCode: string) => {
     }
 
     const handleRoundStarted = (room: RoomDto) => {
+      if (!isActive) return
       console.log('Round started:', room)
       setRoomData(room)
     }
 
     const handleRoundStopped = () => {
+      if (!isActive) return
       console.log('Round ended - signal received')
       // RoundStopped event doesn't contain room data, just a signal
     }
 
     const handleError = (error: string) => {
+      if (!isActive) return
       console.error('SignalR error:', error)
       setError(error)
       setIsLoading(false)
@@ -98,12 +109,15 @@ export const useRoom = (roomCode: string) => {
     connection.on('RoundStarted', handleRoundStarted)
     connection.on('RoundStopped', handleRoundStopped)
 
-    // Rejoin room on connection
+    // Rejoin room on connection - only if playerState matches the current room
     const rejoinRoom = async () => {
       try {
+        if (!playerState || playerState.roomCode !== roomCode) return
         await connection.invoke('GetCurrentRoom')
-      } catch (error) {
-        console.error('Failed to rejoin room:', error)
+      } catch (err) {
+        // If the component unmounted or the user left in the meantime, ignore the error
+        if (!isActive || !playerState || playerState.roomCode !== roomCode) return
+        console.error('Failed to rejoin room:', err)
         setError('Failed to connect to room')
         setIsLoading(false)
       }
@@ -113,6 +127,7 @@ export const useRoom = (roomCode: string) => {
 
     // Cleanup event listeners
     return () => {
+      isActive = false
       connection.off('RoomCreated', handleRoomCreated)
       connection.off('RoomJoined', handleRoomJoined)
       connection.off('Error', handleError)
@@ -120,7 +135,7 @@ export const useRoom = (roomCode: string) => {
       connection.off('RoundStarted', handleRoundStarted)
       connection.off('RoundStopped', handleRoundStopped)
     }
-  }, [connection, isConnected, roomCode])
+  }, [connection, isConnected, roomCode, playerState?.roomCode])
 
   return {
     roomData,
