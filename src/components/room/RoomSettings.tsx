@@ -16,20 +16,62 @@ interface RoomSettingsProps {
   onError: (error: string) => void
 }
 
+interface ISettings {
+  maxPlayers: number;
+  roundDurationSeconds: number;
+  votingDurationSeconds: number;
+  maxRounds: number;
+}
+
+type SettingKey = keyof ISettings;
+
+const SETTINGS_CONFIG = {
+  maxPlayers:           { min: 2,  max: 10,  default: 4  },
+  roundDurationSeconds: { min: 60, max: 180, default: 60 },
+  votingDurationSeconds:{ min: 30,  max: 90,  default: 30 },
+  maxRounds:            { min: 1,  max: 5,  default: 3  },
+};
+
 export function RoomSettings({ roomData, playerState, onError }: RoomSettingsProps) {
   const { updateRoomSettings } = useSignalR()
   const [isEditing, setIsEditing] = useState(false)
   const [isUpdating, setIsUpdating] = useState(false)
   const [topics, setTopics] = useState<string[]>(roomData.topics.map(t => t.name) || [])
   const [newTopic, setNewTopic] = useState('')
-  const [settings, setSettings] = useState({
-    maxPlayers: roomData.maxPlayers || 8,
-    roundDurationSeconds: roomData.roundDurationSeconds || 60,
-    votingDurationSeconds: roomData.votingDurationSeconds || 30,
-    maxRounds: roomData.maxRounds || 5
-  })
+  const [settings, setSettings] = useState<ISettings>({
+    maxPlayers: roomData.maxPlayers || SETTINGS_CONFIG.maxPlayers.default,
+    roundDurationSeconds: roomData.roundDurationSeconds || SETTINGS_CONFIG.roundDurationSeconds.default,
+    votingDurationSeconds: roomData.votingDurationSeconds || SETTINGS_CONFIG.votingDurationSeconds.default,
+    maxRounds: roomData.maxRounds || SETTINGS_CONFIG.maxRounds.default
+  });
+  const [inputValues, setInputValues] = useState<ISettings>(settings);
 
   const isHost = playerState?.id === roomData.hostUserId
+
+  const handleInputChange = (field: SettingKey, value: string) => {
+    setInputValues(prev => ({
+      ...prev,
+      [field]: value
+    }));
+  };
+
+  const handleBlur = (field: SettingKey) => {
+    const config = SETTINGS_CONFIG[field];
+    let finalValue = parseInt(String(inputValues[field]), 10);
+
+    if (isNaN(finalValue)) {
+      finalValue = config.default;
+    }
+
+    if (finalValue < config.min) {
+      finalValue = config.min;
+    } else if (finalValue > config.max) {
+      finalValue = config.max;
+    }
+
+    setSettings(prev => ({ ...prev, [field]: finalValue }));
+    setInputValues(prev => ({ ...prev, [field]: finalValue }));
+  };
 
   const handleAddTopic = () => {
     if (newTopic.trim() && !topics.includes(newTopic.trim())) {
@@ -68,10 +110,10 @@ export function RoomSettings({ roomData, playerState, onError }: RoomSettingsPro
     // Reset to original values
     setTopics(roomData.topics.map(t => t.name) || [])
     setSettings({
-      maxPlayers: roomData.maxPlayers || 8,
-      roundDurationSeconds: roomData.roundDurationSeconds || 60,
-      votingDurationSeconds: roomData.votingDurationSeconds || 30,
-      maxRounds: roomData.maxRounds || 5
+      maxPlayers: roomData.maxPlayers || SETTINGS_CONFIG.maxPlayers.default,
+      roundDurationSeconds: roomData.roundDurationSeconds || SETTINGS_CONFIG.roundDurationSeconds.default,
+      votingDurationSeconds: roomData.votingDurationSeconds || SETTINGS_CONFIG.votingDurationSeconds.default,
+      maxRounds: roomData.maxRounds || SETTINGS_CONFIG.maxRounds.default
     })
     setIsEditing(false)
   }
@@ -89,19 +131,20 @@ export function RoomSettings({ roomData, playerState, onError }: RoomSettingsPro
           <div className="grid grid-cols-2 gap-4 text-sm">
             <div>
               <Label className="text-gray-600">Max Players</Label>
-              <p className="font-medium">{roomData.maxPlayers || 8}</p>
+              <p className="font-medium">{roomData.maxPlayers || SETTINGS_CONFIG.maxPlayers.default}</p>
             </div>
             <div>
               <Label className="text-gray-600">Max Rounds</Label>
-              <p className="font-medium">{roomData.maxRounds || 5}</p>
+              <p className="font-medium">{roomData.maxRounds || SETTINGS_CONFIG.maxRounds.default}</p>
+
             </div>
             <div>
               <Label className="text-gray-600">Round Duration</Label>
-              <p className="font-medium">{roomData.roundDurationSeconds || 60}s</p>
+              <p className="font-medium">{roomData.roundDurationSeconds || SETTINGS_CONFIG.roundDurationSeconds.default}s</p>
             </div>
             <div>
               <Label className="text-gray-600">Voting Duration</Label>
-              <p className="font-medium">{roomData.votingDurationSeconds || 30}s</p>
+              <p className="font-medium">{roomData.votingDurationSeconds || SETTINGS_CONFIG.votingDurationSeconds.default}s</p>
             </div>
           </div>
           
@@ -141,47 +184,43 @@ export function RoomSettings({ roomData, playerState, onError }: RoomSettingsPro
             {/* Game Settings */}
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <Label htmlFor="maxPlayers">Max Players</Label>
+                <Label htmlFor="maxPlayers">Max Players (2-10)</Label>
                 <Input
                   id="maxPlayers"
                   type="number"
-                  min="2"
-                  max="20"
-                  value={settings.maxPlayers}
-                  onChange={(e) => setSettings({...settings, maxPlayers: parseInt(e.target.value) || 8})}
+                  value={inputValues.maxPlayers}
+                  onChange={(e) => handleInputChange('maxPlayers', e.target.value)}
+                  onBlur={() => handleBlur('maxPlayers')}
                 />
               </div>
               <div>
-                <Label htmlFor="maxRounds">Max Rounds</Label>
+                <Label htmlFor="maxRounds">Max Rounds (1-5)</Label>
                 <Input
                   id="maxRounds"
                   type="number"
-                  min="1"
-                  max="20"
-                  value={settings.maxRounds}
-                  onChange={(e) => setSettings({...settings, maxRounds: parseInt(e.target.value) || 5})}
+                  value={inputValues.maxRounds}
+                  onChange={(e) => handleInputChange('maxRounds', e.target.value)}
+                  onBlur={() => handleBlur('maxRounds')}
                 />
               </div>
               <div>
-                <Label htmlFor="roundDuration">Round Duration (seconds)</Label>
+                <Label htmlFor="roundDuration">Round Duration (60-180s)</Label>
                 <Input
-                  id="roundDuration"
+                  id="roundDurationSeconds"
                   type="number"
-                  min="30"
-                  max="300"
-                  value={settings.roundDurationSeconds}
-                  onChange={(e) => setSettings({...settings, roundDurationSeconds: parseInt(e.target.value) || 60})}
+                  value={inputValues.roundDurationSeconds}
+                  onChange={(e) => handleInputChange('roundDurationSeconds', e.target.value)}
+                  onBlur={() => handleBlur('roundDurationSeconds')}
                 />
               </div>
               <div>
-                <Label htmlFor="votingDuration">Voting Duration (seconds)</Label>
+                <Label htmlFor="votingDuration">Voting Duration (30-90s)</Label>
                 <Input
-                  id="votingDuration"
+                  id="votingDurationSeconds"
                   type="number"
-                  min="15"
-                  max="120"
-                  value={settings.votingDurationSeconds}
-                  onChange={(e) => setSettings({...settings, votingDurationSeconds: parseInt(e.target.value) || 30})}
+                  value={inputValues.votingDurationSeconds}
+                  onChange={(e) => handleInputChange('votingDurationSeconds', e.target.value)}
+                  onBlur={() => handleBlur('votingDurationSeconds')}
                 />
               </div>
             </div>
