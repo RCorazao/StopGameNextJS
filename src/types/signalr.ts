@@ -127,6 +127,13 @@ export interface PlayerState {
   roomCode?: string
 }
 
+export interface ChatNotification {
+  player?: PlayerDto
+  message: string
+  timestamp: string
+  source: "System" | "Player";
+}
+
 export interface SignalRContextType {
   connection: HubConnection | null
   connectionState: string
