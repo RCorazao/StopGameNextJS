@@ -17,9 +17,11 @@ export const ChatWidget: React.FC = () => {
   const [unreadCount, setUnreadCount] = useState(0)
   const [newMessage, setNewMessage] = useState("")
   const [isSending, setIsSending] = useState(false)
+  const [keyboardOffset, setKeyboardOffset] = useState(0)
   const scrollRef = useRef<HTMLDivElement | null>(null)
   const chatRef = useRef<HTMLDivElement | null>(null)
   const toggleRef = useRef<HTMLDivElement | null>(null)
+  const inputRef = useRef<HTMLInputElement | null>(null)
 
   // Hide on root route only
   const isHidden = useMemo(() => pathname === "/", [pathname])
@@ -50,6 +52,27 @@ export const ChatWidget: React.FC = () => {
       el.scrollTop = el.scrollHeight
     }
   }, [messages, isOpen])
+
+  // Handle mobile keyboard by tracking visual viewport changes
+  useEffect(() => {
+    if (!isOpen) return
+    const vv = (window as any).visualViewport as VisualViewport | undefined
+    if (!vv) return
+
+    const updateOffset = () => {
+      // Calculate how much the visual viewport is reduced by the keyboard
+      const offset = Math.max(0, (window.innerHeight - vv.height))
+      setKeyboardOffset(offset)
+    }
+
+    updateOffset()
+    vv.addEventListener('resize', updateOffset)
+    vv.addEventListener('scroll', updateOffset)
+    return () => {
+      vv.removeEventListener('resize', updateOffset)
+      vv.removeEventListener('scroll', updateOffset)
+    }
+  }, [isOpen])
 
   // Reset unread when opening
   useEffect(() => {
@@ -112,7 +135,7 @@ export const ChatWidget: React.FC = () => {
       </div>
 
       {/* Chat Panel */}
-      <div className="fixed bottom-20 right-4 z-50 w-80 sm:w-96">
+      <div className="fixed right-4 z-50 w-80 sm:w-96" style={{ bottom: `calc(5rem + ${keyboardOffset}px)` }}>
         <div
           ref={chatRef}
           className={`transform transition-all duration-200 origin-bottom-right ${
@@ -159,9 +182,16 @@ export const ChatWidget: React.FC = () => {
               </div>
               <div className="border-t p-2 flex items-center gap-2">
                 <Input
+                  ref={inputRef}
                   value={newMessage}
                   onChange={(e) => setNewMessage(e.target.value)}
                   onKeyDown={onKeyDown}
+                  onFocus={() => {
+                    // Make sure chat is visible above the keyboard and input is in view
+                    setTimeout(() => {
+                      inputRef.current?.scrollIntoView({ block: 'nearest', behavior: 'smooth' })
+                    }, 50)
+                  }}
                   placeholder="Type a message..."
                 />
                 <Button onClick={handleSend} disabled={!newMessage.trim() || isSending} size="icon" aria-label="Send">
