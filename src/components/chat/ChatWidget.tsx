@@ -135,73 +135,73 @@ export const ChatWidget: React.FC = () => {
       </div>
 
       {/* Chat Panel */}
-      <div className="fixed right-4 z-50 w-80 sm:w-96" style={{ bottom: `calc(5rem + ${keyboardOffset}px)` }}>
-        <div
-          ref={chatRef}
-          className={`transform transition-all duration-200 origin-bottom-right ${
-            isOpen ? "opacity-100 translate-y-0 scale-100" : "pointer-events-none opacity-0 translate-y-2 scale-95"
-          }`}
-        >
-          <Card className="backdrop-blur-sm bg-white/90 dark:bg-gray-900/90 border shadow-xl">
-            <CardHeader className="px-4 border-b">
-              <div className="flex items-center justify-between">
-                <CardTitle className="text-base">Chat</CardTitle>
-                <Button variant="ghost" size="icon" onClick={() => setIsOpen(false)} aria-label="Close chat">
-                  <X className="w-4 h-4" />
-                </Button>
-              </div>
-            </CardHeader>
-            <CardContent className="p-0">
-              <div ref={scrollRef} className="max-h-96 h-80 overflow-y-auto p-3 space-y-2">
-                {messages.length === 0 ? (
-                  <p className="text-sm text-muted-foreground text-center mt-6">No messages yet.</p>
-                ) : (
-                  messages.map((m, idx) => {
-                    const isSystem = m.source === "System"
-                    const author = isSystem ? "System" : (m.player?.name || "Player")
-                    const time = (() => {
-                      try {
-                        return new Date(m.timestamp).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
-                      } catch {
-                        return m.timestamp
-                      }
-                    })()
-                    return (
-                      <div key={idx} className="text-sm">
-                        <div className="flex items-center gap-2">
-                          <span className={isSystem ? "font-semibold text-blue-600" : "font-semibold"}>{author}</span>
-                          <span className="text-xs text-muted-foreground">{time}</span>
+      {isOpen && (
+        <div className="fixed right-4 z-50 w-80 sm:w-96" style={{ bottom: `calc(5rem + ${keyboardOffset}px)` }}>
+          <div
+            ref={chatRef}
+            className="transform transition-all duration-200 origin-bottom-right opacity-100 translate-y-0 scale-100"
+          >
+            <Card className="backdrop-blur-sm bg-white/90 dark:bg-gray-900/90 border shadow-xl">
+              <CardHeader className="px-4 border-b">
+                <div className="flex items-center justify-between">
+                  <CardTitle className="text-base">Chat</CardTitle>
+                  <Button variant="ghost" size="icon" onClick={() => setIsOpen(false)} aria-label="Close chat">
+                    <X className="w-4 h-4" />
+                  </Button>
+                </div>
+              </CardHeader>
+              <CardContent className="p-0">
+                <div ref={scrollRef} className="max-h-96 h-80 overflow-y-auto p-3 space-y-2">
+                  {messages.length === 0 ? (
+                    <p className="text-sm text-muted-foreground text-center mt-6">No messages yet.</p>
+                  ) : (
+                    messages.map((m, idx) => {
+                      const isSystem = m.source === "System"
+                      const author = isSystem ? "System" : (m.player?.name || "Player")
+                      const time = (() => {
+                        try {
+                          return new Date(m.timestamp).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+                        } catch {
+                          return m.timestamp
+                        }
+                      })()
+                      return (
+                        <div key={idx} className="text-sm">
+                          <div className="flex items-center gap-2">
+                            <span className={isSystem ? "font-semibold text-blue-600" : "font-semibold"}>{author}</span>
+                            <span className="text-xs text-muted-foreground">{time}</span>
+                          </div>
+                          <div className="whitespace-pre-wrap break-words text-foreground bg-muted/50 rounded-md px-2 py-1 mt-0.5">
+                            {m.message}
+                          </div>
                         </div>
-                        <div className="whitespace-pre-wrap break-words text-foreground bg-muted/50 rounded-md px-2 py-1 mt-0.5">
-                          {m.message}
-                        </div>
-                      </div>
-                    )
-                  })
-                )}
-              </div>
-              <div className="border-t p-2 flex items-center gap-2">
-                <Input
-                  ref={inputRef}
-                  value={newMessage}
-                  onChange={(e) => setNewMessage(e.target.value)}
-                  onKeyDown={onKeyDown}
-                  onFocus={() => {
-                    // Make sure chat is visible above the keyboard and input is in view
-                    setTimeout(() => {
-                      inputRef.current?.scrollIntoView({ block: 'nearest', behavior: 'smooth' })
-                    }, 50)
-                  }}
-                  placeholder="Type a message..."
-                />
-                <Button onClick={handleSend} disabled={!newMessage.trim() || isSending} size="icon" aria-label="Send">
-                  <Send className="w-4 h-4" />
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
+                      )
+                    })
+                  )}
+                </div>
+                <div className="border-t p-2 flex items-center gap-2">
+                  <Input
+                    ref={inputRef}
+                    value={newMessage}
+                    onChange={(e) => setNewMessage(e.target.value)}
+                    onKeyDown={onKeyDown}
+                    onFocus={() => {
+                      // Make sure chat is visible above the keyboard and input is in view
+                      setTimeout(() => {
+                        inputRef.current?.scrollIntoView({ block: 'nearest', behavior: 'smooth' })
+                      }, 50)
+                    }}
+                    placeholder="Type a message..."
+                  />
+                  <Button onClick={handleSend} disabled={!newMessage.trim() || isSending} size="icon" aria-label="Send">
+                    <Send className="w-4 h-4" />
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
         </div>
-      </div>
+      )}
     </>
   )
 }
