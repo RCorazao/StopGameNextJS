@@ -30,6 +30,3 @@ services:
     #     limits:
     #       cpus: '1'
     #       memory: 1G
-
-networks:
-  - stopgame-net
