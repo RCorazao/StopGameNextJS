@@ -10,8 +10,8 @@ services:
         # Pass environment variables to build stage
         - NEXT_PUBLIC_SIGNALR_HUB_URL=${NEXT_PUBLIC_SIGNALR_HUB_URL}
     restart: always
-    ports:
-      - "3001:3000"
+    # ports:
+    #   - "3001:3000"
     env_file:
       - .env
     environment:
@@ -19,7 +19,7 @@ services:
       - NEXT_PUBLIC_SIGNALR_HUB_URL=${NEXT_PUBLIC_SIGNALR_HUB_URL:-/gameHub}
     # Add healthcheck
     healthcheck:
-      test: ["CMD", "wget", "-qO-", "http://localhost:3001"]
+      test: ["CMD", "wget", "-qO-", "http://localhost:3000"]
       interval: 30s
       timeout: 10s
       retries: 3
