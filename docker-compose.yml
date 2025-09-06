@@ -31,5 +31,5 @@ services:
     #       cpus: '1'
     #       memory: 1G
 
-    networks:
-      - stopgame-net
+networks:
+  - stopgame-net
