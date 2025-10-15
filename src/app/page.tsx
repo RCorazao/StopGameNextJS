@@ -19,7 +19,7 @@ export default function HomePage() {
       <div className="w-full max-w-md space-y-6">
         {/* Connection Status */}
         <ConnectionStatus />
-        
+
         {/* Header */}
         <div className="text-center text-white space-y-2">
           <h1 className="text-4xl font-bold">Stop Game</h1>
@@ -48,16 +48,45 @@ export default function HomePage() {
             </div>
 
             <div className="grid grid-cols-2 gap-3">
-              <CreateRoomDialog 
-                playerName={playerName} 
-                isConnected={isConnected} 
+              <CreateRoomDialog
+                playerName={playerName}
+                isConnected={isConnected}
               />
-              
-              <JoinRoomDialog 
-                playerName={playerName} 
-                isConnected={isConnected} 
+
+              <JoinRoomDialog
+                playerName={playerName}
+                isConnected={isConnected}
               />
             </div>
+          </CardContent>
+        </Card>
+
+        {/* Android App Download */}
+        <Card className="backdrop-blur-sm bg-white/80 border-green-200">
+          <CardHeader>
+            <CardTitle className="text-lg flex items-center gap-2">
+              📱 Get the Android App
+            </CardTitle>
+            <CardDescription>
+              Download the APK while we wait for Play Store approval
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3">
+              <p className="text-sm text-yellow-800">
+                <strong>Note:</strong> Enable "Install from unknown sources" in your Android settings before installing.
+              </p>
+            </div>
+            <a
+              href="/downloads/stop-game.apk"
+              download="stop-game.apk"
+              className="block w-full bg-green-600 hover:bg-green-700 text-white font-medium py-2 px-4 rounded-lg transition-colors text-center"
+            >
+              Download APK
+            </a>
+            <p className="text-xs text-gray-600 text-center">
+              Coming soon to Google Play Store
+            </p>
           </CardContent>
         </Card>
 
