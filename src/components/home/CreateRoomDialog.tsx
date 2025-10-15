@@ -12,6 +12,7 @@ import {
 } from '@/components/ui/dialog'
 import { Plus } from 'lucide-react'
 import { useSignalR } from '@/contexts/SignalRContext'
+import { useLanguage } from '@/contexts/LanguageContext'
 import { useRouter } from 'next/navigation'
 
 interface CreateRoomDialogProps {
@@ -24,6 +25,7 @@ export const CreateRoomDialog: React.FC<CreateRoomDialogProps> = ({ playerName, 
   const [isCreating, setIsCreating] = useState(false)
   const [error, setError] = useState('')
   const { createRoom, setPlayerState } = useSignalR()
+  const { t } = useLanguage()
   const router = useRouter()
 
   const handleCreateRoom = async () => {
@@ -61,20 +63,20 @@ export const CreateRoomDialog: React.FC<CreateRoomDialogProps> = ({ playerName, 
     <Dialog open={showDialog} onOpenChange={setShowDialog}>
       <DialogTrigger asChild>
         <Button 
-          className="h-16 flex-col gap-2 bg-green-500 hover:bg-green-600" 
+          className="h-16 flex-col gap-2 bg-green-500 hover:bg-green-600 cursor-pointer" 
           disabled={!playerName.trim() || !isConnected}
         >
           <Plus className="w-6 h-6" />
-          Create Room
+          {t.createRoom}
         </Button>
       </DialogTrigger>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Create New Room</DialogTitle>
-          <DialogDescription>You'll be the host and can choose topics for the game</DialogDescription>
+          <DialogTitle>{t.createNewRoom}</DialogTitle>
+          <DialogDescription>{t.createRoomDescription}</DialogDescription>
         </DialogHeader>
         <div className="space-y-4">
-          <p className="text-sm text-muted-foreground">Room code will be generated automatically</p>
+          <p className="text-sm text-muted-foreground">{t.roomCodeGenerated}</p>
           {error && (
             <div className="p-3 bg-red-100 border border-red-300 text-red-700 rounded-md text-sm">
               {error}
@@ -82,10 +84,10 @@ export const CreateRoomDialog: React.FC<CreateRoomDialogProps> = ({ playerName, 
           )}
           <Button 
             onClick={handleCreateRoom} 
-            className="w-full" 
+            className="w-full cursor-pointer" 
             disabled={isCreating || !isConnected}
           >
-            {isCreating ? 'Creating...' : 'Create Room'}
+            {isCreating ? t.creating : t.createRoom}
           </Button>
         </div>
       </DialogContent>

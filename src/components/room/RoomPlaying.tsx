@@ -8,6 +8,7 @@ import { Label } from '@/components/ui/label'
 import { Clock, Send } from 'lucide-react'
 import { RoomDto, PlayerState, SubmitAnswersRequest } from '@/types/signalr'
 import { useSignalR } from '@/contexts/SignalRContext'
+import { useLanguage } from '@/contexts/LanguageContext'
 
 interface RoomPlayingProps {
   roomData: RoomDto
@@ -17,6 +18,7 @@ interface RoomPlayingProps {
 
 export const RoomPlaying: React.FC<RoomPlayingProps> = ({ roomData, playerState, onError }) => {
   const { connection, isConnected, stopRound, submitAnswers } = useSignalR()
+  const { t } = useLanguage()
   const [answers, setAnswers] = useState<Record<string, string>>({})
   const answersRef = useRef(answers)
   answersRef.current = answers
@@ -113,7 +115,7 @@ export const RoomPlaying: React.FC<RoomPlayingProps> = ({ roomData, playerState,
     if (!answer || answer.trim() === '') return null
     
     if (!answer.trim().toLowerCase().startsWith(currentRound?.letter.toLowerCase() || '')) {
-      return `Must start with "${currentRound?.letter}"`
+      return `${t.mustStartWith} "${currentRound?.letter}"`
     }
     
     return null
@@ -139,7 +141,7 @@ export const RoomPlaying: React.FC<RoomPlayingProps> = ({ roomData, playerState,
     <Card className="backdrop-blur-sm bg-white/80">
       <CardHeader>
         <CardTitle className="flex justify-between items-center">
-          <span>Round {roomData.rounds.length}: {currentRound.letter}</span>
+          <span>{t.round} {roomData.rounds.length}: {currentRound.letter}</span>
           <div className="flex items-center">
             <Clock className="w-5 h-5 mr-1" />
             <span className={getTimeColor(timeRemaining)}>
@@ -179,21 +181,21 @@ export const RoomPlaying: React.FC<RoomPlayingProps> = ({ roomData, playerState,
               disabled={!canSubmitAnswers()}
             >
               <Send className="w-4 h-4 mr-2" />
-              Stop Round
+              {t.stopRound}
             </Button>
           </div>
 
           {!canSubmitAnswers() && timeRemaining > 0 && !isSubmitting && (
             <div className="text-center text-sm text-gray-600">
               {!roomData.topics.every(topic => answers[topic.id] && answers[topic.id].trim() !== '') && (
-                <p>Fill in all topics to submit</p>
+                <p>{t.fillAllTopics}</p>
               )}
               {roomData.topics.every(topic => answers[topic.id] && answers[topic.id].trim() !== '') &&
                !roomData.topics.every(topic => {
                  const answer = answers[topic.id]
                  return answer && answer.trim().toLowerCase().startsWith(currentRound.letter.toLowerCase())
                }) && (
-                <p>All answers must start with "{currentRound.letter}"</p>
+                <p>{t.mustStartWith} "{currentRound.letter}"</p>
               )}
             </div>
           )}

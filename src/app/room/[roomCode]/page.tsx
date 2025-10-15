@@ -20,12 +20,14 @@ import { RoomPlaying } from '@/components/room/RoomPlaying'
 import { RoomVoting } from '@/components/room/RoomVoting'
 import { RoomResults } from '@/components/room/RoomResults'
 import { RoomFinished } from '@/components/room/RoomFinished'
+import { useLanguage } from "@/contexts/LanguageContext"
 
 export default function RoomPage() {
   const router = useRouter()
   const { playerState, leaveRoom } = useSignalR()
   const roomCode = playerState?.roomCode;
   const { roomData, isLoading, error, setError } = useRoom(roomCode)
+  const { t } = useLanguage()
 
   // Redirect to home if no player state is available
   useEffect(() => {
@@ -129,7 +131,7 @@ export default function RoomPage() {
               className="w-full"
             >
               <ArrowLeft className="w-4 h-4 mr-2" />
-              Leave Room
+              { t.leaveRoom }
             </Button>
           </CardContent>
         </Card>

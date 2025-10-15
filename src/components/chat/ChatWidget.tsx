@@ -3,6 +3,7 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import { usePathname } from "next/navigation"
 import { useSignalR } from "@/contexts/SignalRContext"
+import { useLanguage } from "@/contexts/LanguageContext"
 import { ChatNotification } from "@/types/signalr"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -12,6 +13,7 @@ import { MessageCircle, X, Send } from "lucide-react"
 export const ChatWidget: React.FC = () => {
   const pathname = usePathname()
   const { connection, isConnected } = useSignalR()
+  const { t } = useLanguage()
   const [isOpen, setIsOpen] = useState(false)
   const [messages, setMessages] = useState<ChatNotification[]>([])
   const [unreadCount, setUnreadCount] = useState(0)
@@ -124,7 +126,7 @@ export const ChatWidget: React.FC = () => {
         <div className="relative" ref={toggleRef}>
           <Button onClick={() => setIsOpen(o => !o)} className="rounded-full shadow-lg">
             <MessageCircle className="w-5 h-5 mr-2" />
-            Chat
+            {t.chat}
           </Button>
           {unreadCount > 0 && !isOpen && (
             <span className="absolute -top-2 -right-2 bg-red-500 text-white text-xs rounded-full px-2 py-0.5 shadow">
@@ -144,7 +146,7 @@ export const ChatWidget: React.FC = () => {
             <Card className="backdrop-blur-sm bg-white/90 dark:bg-gray-900/90 border shadow-xl">
               <CardHeader className="px-4 border-b">
                 <div className="flex items-center justify-between">
-                  <CardTitle className="text-base">Chat</CardTitle>
+                  <CardTitle className="text-base">{t.chat}</CardTitle>
                   <Button variant="ghost" size="icon" onClick={() => setIsOpen(false)} aria-label="Close chat">
                     <X className="w-4 h-4" />
                   </Button>
@@ -153,7 +155,7 @@ export const ChatWidget: React.FC = () => {
               <CardContent className="p-0">
                 <div ref={scrollRef} className="max-h-96 h-80 overflow-y-auto p-3 space-y-2">
                   {messages.length === 0 ? (
-                    <p className="text-sm text-muted-foreground text-center mt-6">No messages yet.</p>
+                    <p className="text-sm text-muted-foreground text-center mt-6">{t.noMessagesYet}</p>
                   ) : (
                     messages.map((m, idx) => {
                       const isSystem = m.source === "System"
@@ -191,9 +193,9 @@ export const ChatWidget: React.FC = () => {
                         inputRef.current?.scrollIntoView({ block: 'nearest', behavior: 'smooth' })
                       }, 50)
                     }}
-                    placeholder="Type a message..."
+                    placeholder={t.typeMessage}
                   />
-                  <Button onClick={handleSend} disabled={!newMessage.trim() || isSending} size="icon" aria-label="Send">
+                  <Button onClick={handleSend} disabled={!newMessage.trim() || isSending} size="icon" aria-label={t.send}>
                     <Send className="w-4 h-4" />
                   </Button>
                 </div>

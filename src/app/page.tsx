@@ -6,17 +6,25 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Play } from "lucide-react"
 import { useSignalR } from "@/contexts/SignalRContext"
+import { useLanguage } from "@/contexts/LanguageContext"
 import ConnectionStatus from "@/components/ConnectionStatus"
 import { CreateRoomDialog } from "@/components/home/CreateRoomDialog"
 import { JoinRoomDialog } from "@/components/home/JoinRoomDialog"
+import { LanguageSelector } from "@/components/LanguageSelector"
 
 export default function HomePage() {
   const [playerName, setPlayerName] = useState("")
   const { isConnected } = useSignalR()
+  const { t } = useLanguage()
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-800 via-blue-500 to-white p-4 flex items-center justify-center">
       <div className="w-full max-w-md space-y-6">
+        {/* Language Selector */}
+        <div className="flex justify-end">
+          <LanguageSelector />
+        </div>
+
         {/* Connection Status */}
         <ConnectionStatus />
 
@@ -31,16 +39,16 @@ export default function HomePage() {
           <CardHeader className="text-center">
             <CardTitle className="flex items-center justify-center gap-2">
               <Play className="w-6 h-6" />
-              Ready to Play?
+              {t.readyToPlay}
             </CardTitle>
-            <CardDescription>Enter your name and create or join a room</CardDescription>
+            <CardDescription>{t.enterNameAndRoom}</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="playerName">Your Name</Label>
+              <Label htmlFor="playerName">{t.yourName}</Label>
               <Input
                 id="playerName"
-                placeholder="Enter your name"
+                placeholder={t.enterYourName}
                 value={playerName}
                 onChange={(e) => setPlayerName(e.target.value)}
                 className="text-center"
@@ -65,16 +73,16 @@ export default function HomePage() {
         <Card className="backdrop-blur-sm bg-white/80 border-green-200">
           <CardHeader>
             <CardTitle className="text-lg flex items-center gap-2">
-              📱 Get the Android App
+              {t.getAndroidApp}
             </CardTitle>
             <CardDescription>
-              Download the APK while we wait for Play Store approval
+              {t.downloadApkDescription}
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-3">
             <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3">
               <p className="text-sm text-yellow-800">
-                <strong>Note:</strong> Enable "Install from unknown sources" in your Android settings before installing.
+                <strong>{t.installNote}</strong> {t.installNoteText}
               </p>
             </div>
             <a
@@ -82,10 +90,10 @@ export default function HomePage() {
               download="stop-game.apk"
               className="block w-full bg-green-600 hover:bg-green-700 text-white font-medium py-2 px-4 rounded-lg transition-colors text-center"
             >
-              Download APK
+              {t.downloadApk}
             </a>
             <p className="text-xs text-gray-600 text-center">
-              Coming soon to Google Play Store
+              {t.comingSoonPlayStore}
             </p>
           </CardContent>
         </Card>
@@ -93,13 +101,13 @@ export default function HomePage() {
         {/* Game Rules */}
         <Card className="backdrop-blur-sm bg-white/80">
           <CardHeader>
-            <CardTitle className="text-lg">How to Play</CardTitle>
+            <CardTitle className="text-lg">{t.howToPlay}</CardTitle>
           </CardHeader>
           <CardContent className="space-y-2 text-sm">
-            <p>• Each round starts with a random letter</p>
-            <p>• Fill words for each topic starting with that letter</p>
-            <p>• Vote on other players' answers</p>
-            <p>• Score points for unique and valid answers</p>
+            <p>{t.rule1}</p>
+            <p>{t.rule2}</p>
+            <p>{t.rule3}</p>
+            <p>{t.rule4}</p>
           </CardContent>
         </Card>
       </div>

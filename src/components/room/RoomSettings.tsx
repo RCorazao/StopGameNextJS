@@ -9,6 +9,7 @@ import { Badge } from '@/components/ui/badge'
 import { Settings, Plus, X } from 'lucide-react'
 import { PlayerState, RoomDto, TopicDto, UpdateRoomSettingsRequest } from '@/types/signalr'
 import { useSignalR } from '@/contexts/SignalRContext'
+import { useLanguage } from '@/contexts/LanguageContext'
 
 interface RoomSettingsProps {
   roomData: RoomDto
@@ -26,14 +27,15 @@ interface ISettings {
 type SettingKey = keyof ISettings;
 
 const SETTINGS_CONFIG = {
-  maxPlayers:           { min: 2,  max: 10,  default: 4  },
+  maxPlayers: { min: 2, max: 10, default: 4 },
   roundDurationSeconds: { min: 60, max: 180, default: 60 },
-  votingDurationSeconds:{ min: 30,  max: 90,  default: 30 },
-  maxRounds:            { min: 1,  max: 5,  default: 3  },
+  votingDurationSeconds: { min: 30, max: 90, default: 30 },
+  maxRounds: { min: 1, max: 5, default: 3 },
 };
 
 export function RoomSettings({ roomData, playerState, onError }: RoomSettingsProps) {
   const { updateRoomSettings } = useSignalR()
+  const { t } = useLanguage()
   const [isEditing, setIsEditing] = useState(false)
   const [isUpdating, setIsUpdating] = useState(false)
   const [topics, setTopics] = useState<string[]>(roomData.topics.map(t => t.name) || [])
@@ -87,7 +89,7 @@ export function RoomSettings({ roomData, playerState, onError }: RoomSettingsPro
   const handleSaveSettings = async () => {
     try {
       setIsUpdating(true)
-      
+
       const updateRequest: Partial<UpdateRoomSettingsRequest> = {
         topics,
         maxPlayers: settings.maxPlayers,
@@ -124,33 +126,33 @@ export function RoomSettings({ roomData, playerState, onError }: RoomSettingsPro
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Settings className="w-5 h-5" />
-            Room Settings
+            {t.roomSettings}
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="grid grid-cols-2 gap-4 text-sm">
             <div>
-              <Label className="text-gray-600">Max Players</Label>
+              <Label className="text-gray-600">{t.maxPlayers}</Label>
               <p className="font-medium">{roomData.maxPlayers || SETTINGS_CONFIG.maxPlayers.default}</p>
             </div>
             <div>
-              <Label className="text-gray-600">Max Rounds</Label>
+              <Label className="text-gray-600">{t.maxRounds}</Label>
               <p className="font-medium">{roomData.maxRounds || SETTINGS_CONFIG.maxRounds.default}</p>
 
             </div>
             <div>
-              <Label className="text-gray-600">Round Duration</Label>
+              <Label className="text-gray-600">{t.roundDuration}</Label>
               <p className="font-medium">{roomData.roundDurationSeconds || SETTINGS_CONFIG.roundDurationSeconds.default}s</p>
             </div>
             <div>
-              <Label className="text-gray-600">Voting Duration</Label>
+              <Label className="text-gray-600">{t.votingDuration}</Label>
               <p className="font-medium">{roomData.votingDurationSeconds || SETTINGS_CONFIG.votingDurationSeconds.default}s</p>
             </div>
           </div>
-          
+
           {roomData.topics && roomData.topics.length > 0 && (
             <div>
-              <Label className="text-gray-600">Custom Topics</Label>
+              <Label className="text-gray-600">{t.customTopics}</Label>
               <div className="flex flex-wrap gap-2 mt-2">
                 {roomData.topics.map((topic: TopicDto, index: number) => (
                   <Badge key={index} variant="secondary">{topic.name}</Badge>
@@ -169,11 +171,11 @@ export function RoomSettings({ roomData, playerState, onError }: RoomSettingsPro
         <CardTitle className="flex items-center justify-between">
           <div className="flex items-center gap-2">
             <Settings className="w-5 h-5" />
-            Room Settings
+            {t.roomSettings}
           </div>
           {!isEditing && (
             <Button onClick={() => setIsEditing(true)} variant="outline" size="sm">
-              Edit
+              {t.edit}
             </Button>
           )}
         </CardTitle>
@@ -184,7 +186,7 @@ export function RoomSettings({ roomData, playerState, onError }: RoomSettingsPro
             {/* Game Settings */}
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <Label htmlFor="maxPlayers">Max Players (2-10)</Label>
+                <Label htmlFor="maxPlayers">{t.maxPlayers} (2-10)</Label>
                 <Input
                   id="maxPlayers"
                   type="number"
@@ -194,7 +196,7 @@ export function RoomSettings({ roomData, playerState, onError }: RoomSettingsPro
                 />
               </div>
               <div>
-                <Label htmlFor="maxRounds">Max Rounds (1-5)</Label>
+                <Label htmlFor="maxRounds">{t.maxRounds} (1-5)</Label>
                 <Input
                   id="maxRounds"
                   type="number"
@@ -204,7 +206,7 @@ export function RoomSettings({ roomData, playerState, onError }: RoomSettingsPro
                 />
               </div>
               <div>
-                <Label htmlFor="roundDuration">Round Duration (60-180s)</Label>
+                <Label htmlFor="roundDuration">{t.roundDuration} (60-180s)</Label>
                 <Input
                   id="roundDurationSeconds"
                   type="number"
@@ -214,7 +216,7 @@ export function RoomSettings({ roomData, playerState, onError }: RoomSettingsPro
                 />
               </div>
               <div>
-                <Label htmlFor="votingDuration">Voting Duration (30-90s)</Label>
+                <Label htmlFor="votingDuration">{t.votingDuration} (30-90s)</Label>
                 <Input
                   id="votingDurationSeconds"
                   type="number"
@@ -227,10 +229,10 @@ export function RoomSettings({ roomData, playerState, onError }: RoomSettingsPro
 
             {/* Topics */}
             <div>
-              <Label>Topics</Label>
+              <Label>{t.topics}</Label>
               <div className="flex gap-2 mt-2">
                 <Input
-                  placeholder="Add a custom topic..."
+                  placeholder={t.addCustomTopic}
                   value={newTopic}
                   onChange={(e) => setNewTopic(e.target.value)}
                   onKeyPress={(e) => e.key === 'Enter' && handleAddTopic()}
@@ -258,19 +260,19 @@ export function RoomSettings({ roomData, playerState, onError }: RoomSettingsPro
 
             {/* Action Buttons */}
             <div className="flex gap-2 pt-4">
-              <Button 
-                onClick={handleSaveSettings} 
+              <Button
+                onClick={handleSaveSettings}
                 disabled={isUpdating}
                 className="flex-1"
               >
-                {isUpdating ? 'Saving...' : 'Save Settings'}
+                {isUpdating ? t.saving : t.save}
               </Button>
-              <Button 
-                onClick={handleCancel} 
+              <Button
+                onClick={handleCancel}
                 variant="outline"
                 disabled={isUpdating}
               >
-                Cancel
+                {t.cancel}
               </Button>
             </div>
           </>
@@ -279,26 +281,26 @@ export function RoomSettings({ roomData, playerState, onError }: RoomSettingsPro
             {/* Display Mode */}
             <div className="grid grid-cols-2 gap-4 text-sm">
               <div>
-                <Label className="text-gray-600">Max Players</Label>
+                <Label className="text-gray-600">{t.maxPlayers}</Label>
                 <p className="font-medium">{settings.maxPlayers}</p>
               </div>
               <div>
-                <Label className="text-gray-600">Max Rounds</Label>
+                <Label className="text-gray-600">{t.maxRounds}</Label>
                 <p className="font-medium">{settings.maxRounds}</p>
               </div>
               <div>
-                <Label className="text-gray-600">Round Duration</Label>
+                <Label className="text-gray-600">{t.roundDuration}</Label>
                 <p className="font-medium">{settings.roundDurationSeconds}s</p>
               </div>
               <div>
-                <Label className="text-gray-600">Voting Duration</Label>
+                <Label className="text-gray-600">{t.votingDuration}</Label>
                 <p className="font-medium">{settings.votingDurationSeconds}s</p>
               </div>
             </div>
-            
+
             {topics.length > 0 && (
               <div>
-                <Label className="text-gray-600">Custom Topics</Label>
+                <Label className="text-gray-600">{t.customTopics}</Label>
                 <div className="flex flex-wrap gap-2 mt-2">
                   {topics.map((topic, index) => (
                     <Badge key={index} variant="secondary">{topic}</Badge>

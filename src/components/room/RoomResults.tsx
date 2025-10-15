@@ -5,6 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { RoomDto, PlayerState } from '@/types/signalr'
 import { useSignalR } from '@/contexts/SignalRContext'
+import { useLanguage } from '@/contexts/LanguageContext'
 
 interface RoomResultsProps {
   roomData: RoomDto
@@ -14,6 +15,7 @@ interface RoomResultsProps {
 
 export const RoomResults: React.FC<RoomResultsProps> = ({ roomData, playerState, onError }) => {
   const { startRound } = useSignalR()
+  const { t } = useLanguage()
 
   // Listen for RoomUpdated events to detect state changes
   // useEffect(() => {
@@ -50,12 +52,12 @@ export const RoomResults: React.FC<RoomResultsProps> = ({ roomData, playerState,
   return (
     <Card className="backdrop-blur-sm bg-white/80">
       <CardHeader>
-        <CardTitle>Round Results</CardTitle>
+        <CardTitle>{t.roundResults}</CardTitle>
       </CardHeader>
       <CardContent>
         <div className="space-y-4">
           <div className="space-y-2">
-            <h3 className="text-lg font-medium">Scores</h3>
+            <h3 className="text-lg font-medium">{t.scores}</h3>
             <div className="divide-y">
               {sortedPlayers.map((player, index) => (
                 <div key={player.id} className="py-2 flex justify-between items-center">
@@ -63,7 +65,7 @@ export const RoomResults: React.FC<RoomResultsProps> = ({ roomData, playerState,
                     <span className="font-medium mr-2">{index + 1}.</span>
                     <span>{player.name}</span>
                     {player.id === playerState?.id && (
-                      <span className="ml-2 text-sm text-muted-foreground">(You)</span>
+                      <span className="ml-2 text-sm text-muted-foreground">({t.you})</span>
                     )}
                   </div>
                   <span className="font-bold">{player.score}</span>
@@ -77,13 +79,13 @@ export const RoomResults: React.FC<RoomResultsProps> = ({ roomData, playerState,
               onClick={handleStartNextRound} 
               className="w-full mt-4"
             >
-              Start Next Round
+              {t.startNextRound}
             </Button>
           )}
 
           {!playerState?.isHost && (
             <div className="text-center mt-4">
-              <p>Waiting for host to start the next round...</p>
+              <p>{t.waitingHostNextRound}</p>
             </div>
           )}
         </div>

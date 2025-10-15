@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { RoomDto, PlayerState, VoteAnswerDto, AnswerDto, VoteRequest } from '@/types/signalr'
 import { useSignalR } from '@/contexts/SignalRContext'
+import { useLanguage } from '@/contexts/LanguageContext'
 import { ThumbsUp, ThumbsDown, CheckCircle } from 'lucide-react'
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
 
@@ -17,6 +18,7 @@ interface RoomVotingProps {
 
 export const RoomVoting: React.FC<RoomVotingProps> = ({ roomData, playerState, onError }) => {
   const { connection, isConnected, requestVoteData, submitVotes, vote, finishVotingPhase } = useSignalR()
+  const { t } = useLanguage()
   const [voteAnswers, setVoteAnswers] = useState<VoteAnswerDto[]>([])
   const [votedAnswers, setVotedAnswers] = useState<Record<string, string>>({})
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -163,7 +165,7 @@ export const RoomVoting: React.FC<RoomVotingProps> = ({ roomData, playerState, o
   return (
     <Card className="backdrop-blur-sm bg-white/80">
       <CardHeader>
-        <CardTitle>Vote for the best answers</CardTitle>
+        <CardTitle>{t.voteBestAnswers}</CardTitle>
       </CardHeader>
       <CardContent>
         <div className="space-y-6">
@@ -173,9 +175,9 @@ export const RoomVoting: React.FC<RoomVotingProps> = ({ roomData, playerState, o
             return (
               <div key={topicId} className="space-y-4">
                 <h3 className="text-lg font-medium">
-                  {topic?.name || 'Unknown Topic'}
+                  {topic?.name || t.unknownTopic}
                   <Badge variant="outline" className="ml-2">
-                    Letter: {roomData.currentRound?.letter || '?'}
+                    {t.letter}: {roomData.currentRound?.letter || '?'}
                   </Badge>
                 </h3>
                 
@@ -189,7 +191,7 @@ export const RoomVoting: React.FC<RoomVotingProps> = ({ roomData, playerState, o
                         <div className="flex justify-between items-start mb-2">
                           <div>
                             <div className="font-medium text-lg">{answer.value}</div>
-                            <div className="text-sm text-muted-foreground">By: {answer.playerName}</div>
+                            <div className="text-sm text-muted-foreground">{t.by}: {answer.playerName}</div>
                           </div>
                           
                           <div className="flex space-x-2">
@@ -207,7 +209,7 @@ export const RoomVoting: React.FC<RoomVotingProps> = ({ roomData, playerState, o
                                   </Button>
                                 </TooltipTrigger>
                                 <TooltipContent>
-                                  <p>Like this answer</p>
+                                  <p>{t.likeAnswer}</p>
                                 </TooltipContent>
                               </Tooltip>
                             </TooltipProvider>
@@ -226,7 +228,7 @@ export const RoomVoting: React.FC<RoomVotingProps> = ({ roomData, playerState, o
                                   </Button>
                                 </TooltipTrigger>
                                 <TooltipContent>
-                                  <p>Dislike this answer</p>
+                                  <p>{t.dislikeAnswer}</p>
                                 </TooltipContent>
                               </Tooltip>
                             </TooltipProvider>
@@ -235,7 +237,7 @@ export const RoomVoting: React.FC<RoomVotingProps> = ({ roomData, playerState, o
                         
                         {answer.votes && answer.votes.length > 0 && (
                           <div className="mt-2">
-                            <h4 className="text-sm font-medium mb-1">Votes:</h4>
+                            <h4 className="text-sm font-medium mb-1">{t.votes}:</h4>
                             <div className="flex flex-wrap gap-1">
                               {answer.votes.map((vote, index) => (
                                 <Badge 
@@ -269,7 +271,7 @@ export const RoomVoting: React.FC<RoomVotingProps> = ({ roomData, playerState, o
             className="bg-blue-500 hover:bg-blue-600 text-white"
           >
             <CheckCircle className="h-4 w-4 mr-2" />
-            Finish Voting Phase
+            {t.finishVotingPhase}
           </Button>
         </CardFooter>
       )}

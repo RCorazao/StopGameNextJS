@@ -5,6 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { RoomDto, PlayerState } from '@/types/signalr'
 import { useSignalR } from '@/contexts/SignalRContext'
+import { useLanguage } from '@/contexts/LanguageContext'
 import { useRouter } from 'next/navigation'
 
 interface RoomFinishedProps {
@@ -15,6 +16,7 @@ interface RoomFinishedProps {
 
 export const RoomFinished: React.FC<RoomFinishedProps> = ({ roomData, playerState, onError }) => {
   const { connection, isConnected, leaveRoom } = useSignalR()
+  const { t } = useLanguage()
   const router = useRouter()
 
   // Listen for RoomUpdated events to detect state changes
@@ -52,18 +54,18 @@ export const RoomFinished: React.FC<RoomFinishedProps> = ({ roomData, playerStat
   return (
     <Card className="backdrop-blur-sm bg-white/80">
       <CardHeader>
-        <CardTitle>Game Finished</CardTitle>
+        <CardTitle>{t.gameFinished}</CardTitle>
       </CardHeader>
       <CardContent>
         <div className="space-y-6">
           <div className="text-center">
-            <h2 className="text-2xl font-bold mb-2">Winner</h2>
+            <h2 className="text-2xl font-bold mb-2">{t.winner}</h2>
             <div className="text-3xl font-extrabold">{winner?.name}</div>
-            <div className="text-xl font-bold mt-1">{winner?.score} points</div>
+            <div className="text-xl font-bold mt-1">{winner?.score} {t.points}</div>
           </div>
 
           <div className="space-y-2">
-            <h3 className="text-lg font-medium">Final Scores</h3>
+            <h3 className="text-lg font-medium">{t.finalScores}</h3>
             <div className="divide-y">
               {sortedPlayers.map((player, index) => (
                 <div key={player.id} className="py-2 flex justify-between items-center">
@@ -71,7 +73,7 @@ export const RoomFinished: React.FC<RoomFinishedProps> = ({ roomData, playerStat
                     <span className="font-medium mr-2">{index + 1}.</span>
                     <span>{player.name}</span>
                     {player.id === playerState?.id && (
-                      <span className="ml-2 text-sm text-muted-foreground">(You)</span>
+                      <span className="ml-2 text-sm text-muted-foreground">({t.you})</span>
                     )}
                   </div>
                   <span className="font-bold">{player.score}</span>

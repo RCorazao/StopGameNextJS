@@ -2,10 +2,12 @@
 
 import React from 'react'
 import { useSignalR } from '@/contexts/SignalRContext'
+import { useLanguage } from '@/contexts/LanguageContext'
 import { Card } from '@/components/ui/card'
 
 const ConnectionStatus: React.FC = () => {
   const { connectionState, isConnected } = useSignalR()
+  const { t } = useLanguage()
 
   const getStatusColor = () => {
     switch (connectionState) {
@@ -40,17 +42,15 @@ const ConnectionStatus: React.FC = () => {
   const getStatusText = () => {
     switch (connectionState) {
       case 'Connected':
-        return 'Connected to game server'
+        return t.connected
       case 'Connecting':
-        return 'Connecting to game server...'
       case 'Reconnecting':
-        return 'Reconnecting to game server...'
+        return t.connecting
       case 'Disconnected':
-        return 'Disconnected from game server'
       case 'Failed':
-        return 'Failed to connect to game server'
+        return t.disconnected
       default:
-        return 'Unknown connection state'
+        return t.disconnected
     }
   }
 

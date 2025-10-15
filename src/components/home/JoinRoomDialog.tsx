@@ -14,6 +14,7 @@ import {
 } from '@/components/ui/dialog'
 import { Hash } from 'lucide-react'
 import { useSignalR } from '@/contexts/SignalRContext'
+import { useLanguage } from '@/contexts/LanguageContext'
 import { useRouter } from 'next/navigation'
 
 interface JoinRoomDialogProps {
@@ -27,6 +28,7 @@ export const JoinRoomDialog: React.FC<JoinRoomDialogProps> = ({ playerName, isCo
   const [isJoining, setIsJoining] = useState(false)
   const [error, setError] = useState('')
   const { joinRoom, setPlayerState } = useSignalR()
+  const { t } = useLanguage()
   const router = useRouter()
 
   const handleJoinRoom = async () => {
@@ -64,24 +66,24 @@ export const JoinRoomDialog: React.FC<JoinRoomDialogProps> = ({ playerName, isCo
     <Dialog open={showDialog} onOpenChange={setShowDialog}>
       <DialogTrigger asChild>
         <Button 
-          className="h-16 flex-col gap-2 bg-blue-500 hover:bg-blue-600" 
+          className="h-16 flex-col gap-2 bg-blue-500 hover:bg-blue-600 cursor-pointer" 
           disabled={!playerName.trim() || !isConnected}
         >
           <Hash className="w-6 h-6" />
-          Join Room
+          {t.joinRoom}
         </Button>
       </DialogTrigger>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Join Room</DialogTitle>
-          <DialogDescription>Enter the room code to join an existing game</DialogDescription>
+          <DialogTitle>{t.joinRoom}</DialogTitle>
+          <DialogDescription>{t.joinRoomDescription}</DialogDescription>
         </DialogHeader>
         <div className="space-y-4">
           <div className="space-y-2">
-            <Label htmlFor="roomCode">Room Code</Label>
+            <Label htmlFor="roomCode">{t.roomCode}</Label>
             <Input
               id="roomCode"
-              placeholder="Enter room code"
+              placeholder={t.enterRoomCode}
               value={roomCode}
               onChange={(e) => setRoomCode(e.target.value.toUpperCase())}
               className="text-center font-mono text-lg"
@@ -95,10 +97,10 @@ export const JoinRoomDialog: React.FC<JoinRoomDialogProps> = ({ playerName, isCo
           )}
           <Button 
             onClick={handleJoinRoom} 
-            className="w-full" 
+            className="w-full cursor-pointer" 
             disabled={isJoining || !roomCode.trim() || !isConnected}
           >
-            {isJoining ? 'Joining...' : 'Join Room'}
+            {isJoining ? t.joining : t.joinRoom}
           </Button>
         </div>
       </DialogContent>
