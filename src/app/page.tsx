@@ -80,14 +80,10 @@ export default function HomePage() {
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-3">
-            <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3">
-              <p className="text-sm text-yellow-800">
-                <strong>{t.installNote}</strong> {t.installNoteText}
-              </p>
-            </div>
             <a
-              href="/downloads/stop-game.apk"
-              download="stop-game.apk"
+              href="https://play.google.com/store/apps/details?id=com.reicode.stopgame"
+              target="_blank"
+              rel="noopener noreferrer"
               className="block w-full bg-green-600 hover:bg-green-700 text-white font-medium py-2 px-4 rounded-lg transition-colors text-center"
             >
               {t.downloadApk}
